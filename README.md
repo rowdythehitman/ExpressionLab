@@ -3,6 +3,8 @@
 A browser-based visual scripting editor for After Effects expressions. You build a node graph and it compiles to a
 clean, readable AE expression that you paste into After Effects. Fully client-side.
 
+**Open the app:** https://rowdythehitman.github.io/ExpressionLab/ (nothing to install).
+
 - Spec: [`docs/SPEC.md`](docs/SPEC.md)
 - Decisions log: [`docs/decisions.md`](docs/decisions.md)
 
@@ -49,6 +51,12 @@ npm run typecheck
 npm run lint
 npm run build
 ```
+
+## Deploy
+
+Every push to `main` builds the app and publishes it to GitHub Pages (`.github/workflows/pages.yml`). The build runs the
+unit tests first, so a red `main` doesn't deploy. One-time setup: in the repo's **Settings → Pages**, set **Source** to
+**GitHub Actions**.
 
 ## Layout
 
