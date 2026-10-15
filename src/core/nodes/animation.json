@@ -1,6 +1,6 @@
 [
   {
-    "id": "anim.wiggle", "label": "Wiggle", "category": "animation",
+    "id": "anim.wiggle", "label": "Wiggle", "category": "animation", "noInline": true,
     "description": "Random wiggle of the target property, or of another property if wired.",
     "tags": ["wiggle", "random", "shake", "noise"],
     "inputs": [
@@ -22,7 +22,7 @@
     "verify": "Position wiggles around its base value; changing the freq control changes speed."
   },
   {
-    "id": "anim.loopWiggle", "label": "Looping Wiggle", "category": "animation",
+    "id": "anim.loopWiggle", "label": "Looping Wiggle", "category": "animation", "noInline": true,
     "description": "Wiggle that seamlessly loops every N seconds.",
     "tags": ["wiggle", "loop", "seamless"],
     "inputs": [

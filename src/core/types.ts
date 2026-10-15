@@ -77,6 +77,8 @@ export interface NodeDef {
   special?: SpecialKind;
   /** Substitute the expression where it's used instead of emitting a `const` (refs, literals). */
   inline?: boolean;
+  /** Never fold into the consumer, e.g. nodes whose result depends on random-seed state (wiggle). */
+  noInline?: boolean;
   source?: string;
   verify?: string;
 }
@@ -147,6 +149,8 @@ export interface Settings {
   useMatchNames: boolean;
   comments: 'none' | 'minimal' | 'verbose';
   embedGraph: boolean;
+  /** Phase 2: substitute single-use, side-effect-free nodes into their consumer. Default false. */
+  inlineSingleUse?: boolean;
 }
 
 export interface Project {

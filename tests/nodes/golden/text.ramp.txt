@@ -1,0 +1,5 @@
+// ExpressionLab · Text Selector Amount
+// Index Ramp
+const indexRamp = 100 * (textIndex - 1) / Math.max(1, textTotal - 1);
+
+indexRamp

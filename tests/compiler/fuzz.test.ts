@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { analyzeGraph, checkConnection, compile, NODE_DEFS, type Project } from '../../src/core';
 import { assertParses, edge, node, TARGET_FOR } from '../helpers';
+import { evaluate, type MockContext } from '../runtime/mockAE';
 
 function rng(seed: number) {
   return () => {
@@ -27,7 +28,7 @@ function randomProject(seed: number): Project {
       comps: [],
     },
     graphs: [{ id: 'g', name: 'fuzz', target: { id: 'rotation' }, nodes: [], edges: [] }],
-    settings: { aeTarget: 26, useMatchNames: false, comments: pick(['none', 'minimal', 'verbose'] as const), embedGraph: false },
+    settings: { aeTarget: 26, useMatchNames: false, comments: pick(['none', 'minimal', 'verbose'] as const), embedGraph: false, inlineSingleUse: r() < 0.5 },
   };
   const g = p.graphs[0]!;
   const { nodes, edges } = g;
@@ -85,4 +86,42 @@ describe('fuzz: random graphs', () => {
     // Make sure the generator actually exercises the emitter.
     expect(clean).toBeGreaterThan(200);
   });
+
+  it('the inlining pass never changes the result (mock runtime)', () => {
+    const VALUE: Record<string, unknown> = { number: 42, vec2: [10, 20], vec3: [1, 2, 3], color: [0.2, 0.4, 0.6, 1], string: 'hi', boolean: true };
+    let compared = 0;
+    let folded = 0;
+    for (let seed = 1; seed <= 2000; seed++) {
+      const p = randomProject(seed);
+      p.settings.inlineSingleUse = false;
+      const plain = compile(p, 'g');
+      if (!plain.code) continue;
+      p.settings.inlineSingleUse = true;
+      const inlined = compile(p, 'g');
+      assertParses(inlined.code);
+      if (inlined.code.split('\n').length < plain.code.split('\n').length) folded++;
+      const vt = TARGET_FOR_VALUE(p.graphs[0]!.target);
+      const ctx: MockContext = {
+        time: 1.37, value: VALUE[vt] as MockContext['value'], index: 3, markers: [0.5, 1],
+        textIndex: 2, textTotal: 5,
+        thisLayer: { effects: { 'Tint/Color': [1, 0, 0, 1] }, rect: { left: -10, top: -5, width: 20, height: 10 } },
+        layers: { CTRLS: { effects: { 'Amount/Slider': 7 } } },
+      };
+      let expected: unknown;
+      try {
+        expected = evaluate(plain.code, ctx);
+      } catch {
+        continue; // API the mock doesn't model (e.g. loop without keyframes)
+      }
+      compared++;
+      expect(evaluate(inlined.code, ctx), `seed ${seed}\n${plain.code}\n---\n${inlined.code}`).toEqual(expected);
+    }
+    expect(compared).toBeGreaterThan(200);
+    expect(folded).toBeGreaterThan(50);
+  });
 });
+
+function TARGET_FOR_VALUE(target: { id: string; valueType?: string }): string {
+  if (target.valueType) return target.valueType;
+  return Object.entries(TARGET_FOR).find(([, t]) => t.id === target.id)?.[0] ?? 'number';
+}

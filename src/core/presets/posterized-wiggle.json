@@ -31,5 +31,5 @@
       ]
     }
   ],
-  "settings": { "aeTarget": 26, "useMatchNames": false, "comments": "minimal", "embedGraph": false }
+  "settings": { "aeTarget": 26, "useMatchNames": false, "comments": "minimal", "embedGraph": true }
 }

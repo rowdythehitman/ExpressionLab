@@ -1,0 +1,5 @@
+// ExpressionLab · Text Selector Amount
+// Typewriter
+const typewriter = (textIndex - 1 >= (time - inPoint) * 20 ? 100 : 0);
+
+typewriter

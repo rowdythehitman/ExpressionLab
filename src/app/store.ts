@@ -1,8 +1,8 @@
 // App state: the project, undo/redo history (graph and globals share one history), UI selection.
 import { produce } from 'immer';
 import { create } from 'zustand';
-import type { ConverterFix, Graph, Literal, NodeInstance, Project } from '../core';
-import { NODE_DEFS } from '../core';
+import type { ConverterFix, DecodedPayload, Graph, Literal, NodeInstance, Project } from '../core';
+import { importGraph, NODE_DEFS } from '../core';
 import { PRESETS } from '../core/presets';
 
 const HISTORY_LIMIT = 200;
@@ -34,6 +34,7 @@ interface State {
   redo(): void;
   select(id: string | null): void;
   setConnectError(e: ConnectError | null): void;
+  setGraph(id: string): void;
 }
 
 export const defaultProject = (): Project => structuredClone(PRESETS[0]!.project);
@@ -104,6 +105,7 @@ export const useStore = create<State>((set, get) => ({
 
   select: (id) => set({ selectedNodeId: id }),
   setConnectError: (e) => set({ connectError: e }),
+  setGraph: (id) => set({ graphId: id, selectedNodeId: null, connectError: null }),
 }));
 
 // ---- Selectors / helpers ----
@@ -228,6 +230,58 @@ export const actions = {
     editGraph((g) => {
       g.target = target;
     });
+  },
+
+  addGraph(): string {
+    const id = newId('g');
+    const { update, setGraph } = useStore.getState();
+    update((p) => {
+      p.graphs.push({
+        id,
+        name: `Expression ${p.graphs.length + 1}`,
+        target: { id: 'position2D' },
+        nodes: [
+          { id: newId('n'), type: 'ctx.value', position: { x: 0, y: 0 }, inputs: {}, params: {} },
+          { id: newId('n'), type: 'output', position: { x: 300, y: 0 }, inputs: {}, params: {} },
+        ],
+        edges: [],
+      });
+      const g = p.graphs.at(-1)!;
+      g.edges.push({ id: newId('e'), from: { node: g.nodes[0]!.id, port: 'out' }, to: { node: g.nodes[1]!.id, port: 'in' } });
+    });
+    setGraph(id);
+    return id;
+  },
+
+  duplicateGraph(graphId: string) {
+    const id = newId('g');
+    const { update, setGraph } = useStore.getState();
+    update((p) => {
+      const src = p.graphs.find((g) => g.id === graphId);
+      if (src) p.graphs.push({ ...structuredClone(src), id, name: `${src.name} copy` });
+    });
+    setGraph(id);
+  },
+
+  deleteGraph(graphId: string) {
+    const { update, setGraph, project } = useStore.getState();
+    if (project.graphs.length < 2) return;
+    const next = project.graphs.find((g) => g.id !== graphId)!.id;
+    update((p) => {
+      p.graphs = p.graphs.filter((g) => g.id !== graphId);
+    });
+    setGraph(next);
+  },
+
+  /** Adds a graph decoded from a pasted expression (spec §8). */
+  importDecoded(decoded: DecodedPayload) {
+    const { project, update, setGraph } = useStore.getState();
+    const { project: merged, graphId } = importGraph(project, decoded, () => newId('g'));
+    update((p) => {
+      p.globals = merged.globals;
+      p.graphs = merged.graphs;
+    });
+    setGraph(graphId);
   },
 
   renameGraph(name: string) {

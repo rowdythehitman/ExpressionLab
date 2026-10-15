@@ -1,5 +1,44 @@
 [
   { "id": "text.sourceText", "label": "Source Text", "category": "text", "description": "The text of a text layer (this layer if none is wired).", "tags": ["text", "string", "source"], "inputs": [{ "id": "layer", "label": "Layer", "type": "layer", "default": "thisLayer" }], "outputs": [{ "id": "out", "label": "Text", "type": "string", "expr": "{{in.layer}}.text.sourceText.value" }], "verify": "On another text layer's Source Text, it mirrors the referenced layer." },
   { "id": "text.fromNumber", "label": "Number to Text", "category": "text", "description": "Formats a number with a fixed number of decimals.", "tags": ["text", "number", "format", "decimals", "counter"], "inputs": [{ "id": "n", "label": "Number", "type": "number", "default": 0 }], "params": [{ "id": "decimals", "label": "Decimals", "kind": "number", "default": 0 }], "outputs": [{ "id": "out", "label": "Text", "type": "string", "expr": "({{in.n}}).toFixed({{param.decimals}})" }], "verify": "On Source Text with n = time, decimals = 1, it counts 0.0, 0.1, ..." },
-  { "id": "string.concat", "label": "Join Text", "category": "text", "description": "A + B as text.", "tags": ["text", "concat", "join", "append", "string"], "inputs": [{ "id": "a", "label": "A", "type": "string", "default": "" }, { "id": "b", "label": "B", "type": "string", "default": "" }], "outputs": [{ "id": "out", "label": "Text", "type": "string", "expr": "{{in.a}} + {{in.b}}" }], "verify": "\"Score: \" + Number to Text shows a label and value." }
+  { "id": "string.concat", "label": "Join Text", "category": "text", "description": "A + B as text.", "tags": ["text", "concat", "join", "append", "string"], "inputs": [{ "id": "a", "label": "A", "type": "string", "default": "" }, { "id": "b", "label": "B", "type": "string", "default": "" }], "outputs": [{ "id": "out", "label": "Text", "type": "string", "expr": "{{in.a}} + {{in.b}}" }], "verify": "\"Score: \" + Number to Text shows a label and value." },
+  {
+    "id": "text.stagger", "label": "Stagger", "category": "text",
+    "description": "Per-character (or word/line) animation offset: each element starts a few frames after the previous one. Use on an Expression Selector's Amount.",
+    "tags": ["text", "stagger", "cascade", "delay", "animate in", "selector", "textIndex"],
+    "contexts": ["textSelectorAmount"],
+    "inputs": [
+      { "id": "start", "label": "Start (s)", "type": "number", "default": "inPoint" },
+      { "id": "delayFrames", "label": "Delay (frames)", "type": "number", "default": 2 },
+      { "id": "durFrames", "label": "Duration (frames)", "type": "number", "default": 8 },
+      { "id": "from", "label": "From", "type": "number", "default": 100 },
+      { "id": "to", "label": "To", "type": "number", "default": 0 }
+    ],
+    "params": [{ "id": "mode", "label": "Easing", "kind": "select", "options": ["ease", "linear", "easeIn", "easeOut"], "default": "ease" }],
+    "locals": ["start"],
+    "statements": ["const {{local.start}} = {{in.start}} + (textIndex - 1) * {{in.delayFrames}} * thisComp.frameDuration;"],
+    "outputs": [{ "id": "out", "label": "Amount", "type": "number", "expr": "{{param.mode}}(time, {{local.start}}, {{local.start}} + {{in.durFrames}} * thisComp.frameDuration, {{in.from}}, {{in.to}})" }],
+    "verify": "With a Position animator, characters slide in one after another, 2 frames apart."
+  },
+  {
+    "id": "text.typewriter", "label": "Typewriter", "category": "text",
+    "description": "100 for elements not yet typed, 0 once typed. Pair with an Opacity 0% animator on an Expression Selector.",
+    "tags": ["text", "typewriter", "type on", "reveal", "selector", "textIndex"],
+    "contexts": ["textSelectorAmount"],
+    "inputs": [
+      { "id": "start", "label": "Start (s)", "type": "number", "default": "inPoint" },
+      { "id": "cps", "label": "Chars / s", "type": "number", "default": 20 }
+    ],
+    "outputs": [{ "id": "out", "label": "Amount", "type": "number", "expr": "(textIndex - 1 >= (time - {{in.start}}) * {{in.cps}} ? 100 : 0)" }],
+    "verify": "With an Opacity 0% animator, the text types on at 20 characters per second from the layer's in point."
+  },
+  {
+    "id": "text.ramp", "label": "Index Ramp", "category": "text",
+    "description": "0 on the first element up to Amount on the last (textIndex / textTotal), e.g. for gradients across characters.",
+    "tags": ["text", "ramp", "gradient", "selector", "textIndex", "textTotal"],
+    "contexts": ["textSelectorAmount"],
+    "inputs": [{ "id": "amount", "label": "Amount", "type": "number", "default": 100 }],
+    "outputs": [{ "id": "out", "label": "Amount", "type": "number", "expr": "{{in.amount}} * (textIndex - 1) / Math.max(1, textTotal - 1)" }],
+    "verify": "With a Fill Colour animator the first character is unaffected and the last fully affected."
+  }
 ]

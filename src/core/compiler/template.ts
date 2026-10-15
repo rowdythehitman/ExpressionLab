@@ -62,9 +62,44 @@ export function pickBranch(tpl: Tpl, ctx: WhenContext): string {
   throw new Error('No template branch matched');
 }
 
+/**
+ * True when `expr` can't be dropped into an operator position as-is: it has an operator, comma,
+ * arrow or space at bracket depth 0 (outside strings), or is a negative literal.
+ */
+export function needsParens(expr: string): boolean {
+  let depth = 0;
+  let quote: string | null = null;
+  for (let i = 0; i < expr.length; i++) {
+    const c = expr[i]!;
+    if (quote) {
+      if (c === '\\') i++;
+      else if (c === quote) quote = null;
+      continue;
+    }
+    if (c === '"' || c === "'" || c === '`') quote = c;
+    else if (c === '(' || c === '[' || c === '{') depth++;
+    else if (c === ')' || c === ']' || c === '}') depth--;
+    else if (depth === 0 && ' +-*/%<>=!&|?:,;'.includes(c)) return true;
+  }
+  return false;
+}
+
+/** A placeholder whose neighbours are `(`/`,`/`[`/`?`/`:`/`=` before and `)`/`,`/`]`/`:`/`;` after needs no parens. */
+function isSafeSlot(text: string, start: number, end: number): boolean {
+  let i = start - 1;
+  while (i >= 0 && text[i] === ' ') i--;
+  let j = end;
+  while (j < text.length && text[j] === ' ') j++;
+  const before = i < 0 ? '' : text[i]!;
+  const after = j >= text.length ? '' : text[j]!;
+  const beforeOk = before === '' || '(,[?:'.includes(before) || (before === '=' && !'=!<>'.includes(text[i - 1] ?? ''));
+  const afterOk = after === '' || '),]:;'.includes(after);
+  return beforeOk && afterOk;
+}
+
 export function render(text: string, scope: TemplateScope): RenderResult {
   const unresolved: string[] = [];
-  const out = text.replace(/\{\{\s*([a-z]+)\.([A-Za-z0-9_]+)\s*\}\}/g, (whole, kind: string, id: string) => {
+  const out = text.replace(/\{\{\s*([a-z]+)\.([A-Za-z0-9_]+)\s*\}\}/g, (whole, kind: string, id: string, offset: number) => {
     const v =
       kind === 'in' ? scope.input(id)
       : kind === 'param' ? scope.paramText(id)
@@ -75,6 +110,8 @@ export function render(text: string, scope: TemplateScope): RenderResult {
       unresolved.push(whole);
       return whole;
     }
+    // Upstream expressions and raw-code literals keep their meaning wherever they land.
+    if (kind === 'in' && needsParens(v) && !isSafeSlot(text, offset, offset + whole.length)) return `(${v})`;
     return v;
   });
   // Anything that still looks like a placeholder (bad kind, malformed braces) is unresolved too.

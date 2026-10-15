@@ -1,7 +1,8 @@
 // Searchable node palette (spec §12). Click to add at the canvas centre, or drag onto the canvas.
 import { useReactFlow } from '@xyflow/react';
 import { useMemo, useState } from 'react';
-import { NODE_DEFS, TARGETS, type NodeDef } from '../../core';
+import { NODE_DEFS, type NodeDef } from '../../core';
+import { disabledReason as reasonFor } from '../nodeSearch';
 import { actions, useGraph, useStore } from '../store';
 import { CATEGORY_LABEL, CATEGORY_ORDER } from './ports';
 
@@ -12,17 +13,7 @@ export function Palette() {
   const graph = useGraph();
   const aeTarget = useStore((s) => s.project.settings.aeTarget);
   const rf = useReactFlow();
-  const target = TARGETS.get(graph.target.id);
-  const hasOutput = graph.nodes.some((n) => NODE_DEFS.get(n.type)?.special === 'output');
-
-  const disabledReason = (d: NodeDef): string | null => {
-    if (d.contexts && !d.contexts.some((c) => target?.contexts.includes(c))) {
-      return `Only available when applying to: ${d.contexts.map((c) => TARGETS.get(c)?.label ?? c).join(', ')}`;
-    }
-    if (d.requires?.minAE && d.requires.minAE > aeTarget) return `Needs After Effects ${d.requires.minAE}+`;
-    if (d.special === 'output' && hasOutput) return 'A graph has exactly one Output';
-    return null;
-  };
+  const disabledReason = (d: NodeDef) => reasonFor(d, graph, aeTarget);
 
   const groups = useMemo(() => {
     const needle = q.trim().toLowerCase();

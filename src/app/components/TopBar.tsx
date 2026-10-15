@@ -14,7 +14,7 @@ function splitTarget(id: string) {
   return m ? { base: m[1]!, is3D: m[2] === '3D' } : { base: id, is3D: false };
 }
 
-export function TopBar() {
+export function TopBar({ onPasteImport }: { onPasteImport: () => void }) {
   const graph = useGraph();
   const project = useStore((s) => s.project);
   const canUndo = useStore((s) => s.past.length > 0);
@@ -113,9 +113,10 @@ export function TopBar() {
         ))}
       </select>
 
-      <button className="ghost" onClick={() => fileRef.current?.click()}>Import</button>
+      <button className="ghost" onClick={onPasteImport} title="Paste an expression copied from ExpressionLab to edit its graph">Paste expression</button>
+      <button className="ghost" onClick={() => fileRef.current?.click()} title="Open a .aenodes.json project">Open</button>
       <input ref={fileRef} type="file" accept=".json,application/json" hidden onChange={(e) => void onImport(e.target.files?.[0])} />
-      <button className="ghost" onClick={() => exportProject(project)}>Export</button>
+      <button className="ghost" onClick={() => exportProject(project)} title="Save the project as .aenodes.json">Save</button>
 
       <details className="menu">
         <summary>Settings</summary>
@@ -131,6 +132,14 @@ export function TopBar() {
           <label title="Use match names like &quot;ADBE Slider Control-0001&quot; so expressions work in non-English AE">
             <input type="checkbox" checked={project.settings.useMatchNames} onChange={(e) => setSetting('useMatchNames', e.target.checked)} />
             Use match names (non-English AE)
+          </label>
+          <label title="Adds a //@ae-nodes line so the expression can be pasted back into the app and edited">
+            <input type="checkbox" checked={project.settings.embedGraph} onChange={(e) => setSetting('embedGraph', e.target.checked)} />
+            Embed graph in output
+          </label>
+          <label title="Fold single-use values into the expression that uses them instead of naming each one">
+            <input type="checkbox" checked={!!project.settings.inlineSingleUse} onChange={(e) => setSetting('inlineSingleUse', e.target.checked)} />
+            Inline single-use values
           </label>
           <label>
             AE version
