@@ -89,6 +89,13 @@ export function resolveTypes(order: NodeInstance[], incoming: Incoming, ctx: Res
       const c = ctx.globals.controls.find((x) => x.id === n.ref?.controlId);
       if (c) b.T = innerType(CONTROLS[c.type].outputType) as ValueType;
       else issues.push({ code: 'GLOBAL_NOT_FOUND', message: 'Pick a control from Globals', nodeId: n.id });
+      if (c && d.controlTypes && !d.controlTypes.includes(c.type)) {
+        issues.push({
+          code: 'TYPE_MISMATCH',
+          message: `${d.label} needs a ${d.controlTypes.map((t) => CONTROLS[t].label).join(' or ')}, not a ${CONTROLS[c.type].label}`,
+          nodeId: n.id,
+        });
+      }
     }
     if (d.special === 'ref.property') {
       const p = PROPERTIES.get(n.ref?.propertyPath ?? '');

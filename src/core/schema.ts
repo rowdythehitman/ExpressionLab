@@ -66,6 +66,7 @@ export const nodeDefSchema = z.object({
   special: z.enum(['ref.control', 'ref.layer', 'ref.property', 'literal', 'output', 'reroute', 'comment']).optional(),
   inline: z.boolean().optional(),
   noInline: z.boolean().optional(),
+  controlTypes: z.array(z.enum(['slider', 'checkbox', 'dropdown', 'color', 'point', 'point3d', 'angle', 'layer'])).optional(),
   source: z.string().optional(),
   verify: z.string().optional(),
 }) satisfies z.ZodType<NodeDef>;

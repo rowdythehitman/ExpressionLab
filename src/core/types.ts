@@ -77,6 +77,8 @@ export interface NodeDef {
   special?: SpecialKind;
   /** Substitute the expression where it's used instead of emitting a `const` (refs, literals). */
   inline?: boolean;
+  /** For ref.control nodes: the control types this node can read (e.g. dropdown-only `.text`). */
+  controlTypes?: ControlType[];
   /** Never fold into the consumer, e.g. nodes whose result depends on random-seed state (wiggle). */
   noInline?: boolean;
   source?: string;
@@ -139,7 +141,7 @@ export interface ControlGlobal {
   type: ControlType;
   host: ControlHost;
   dropdownItems?: string[];
-  /** Value the Output Preview uses for this control. */
+  /** Value the Output Preview uses for this control (and the .jsx setup script sets). */
   previewValue?: number | number[];
 }
 

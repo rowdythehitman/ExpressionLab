@@ -1,0 +1,10 @@
+// ExpressionLab · Rotation
+// Current Marker
+let currentMarker_n = 0;
+if (marker.numKeys > 0) {
+  currentMarker_n = marker.nearestKey(time).index;
+  if (marker.key(currentMarker_n).time > time) { currentMarker_n--; }
+}
+const currentMarkerTime = (currentMarker_n > 0 ? marker.key(currentMarker_n).time : 0);
+
+currentMarkerTime

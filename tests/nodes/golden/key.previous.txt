@@ -1,0 +1,6 @@
+// ExpressionLab · Rotation
+// Previous Keyframe
+const previousKeyframe_k = numKeys > 0 ? thisProperty.previousKey(time) : null;
+const previousKeyframeTime = (previousKeyframe_k ? previousKeyframe_k.time : 0);
+
+previousKeyframeTime

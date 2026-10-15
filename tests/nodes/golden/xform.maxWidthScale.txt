@@ -1,0 +1,7 @@
+// ExpressionLab · Rotation
+// Max Width Scale
+const maxWidthScale_rw = thisLayer.sourceRectAtTime(time, true).width;
+const maxWidthScale_s = maxWidthScale_rw > 800 ? (100 * 800) / maxWidthScale_rw : 100;
+const maxWidthScale = maxWidthScale_s;
+
+maxWidthScale

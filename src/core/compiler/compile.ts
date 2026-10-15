@@ -303,7 +303,11 @@ export function compile(input: Project | unknown, graphId: string, opts: Compile
         return p.emit === 'string' ? JSON.stringify(String(v)) : formatLiteral(v, 'raw');
       },
       local: (id) => localNames.get(n.id)?.get(id),
-      ref: (id) => (id === 'path' ? PROPERTIES.get(n.ref?.propertyPath ?? '')?.path : undefined),
+      ref: (id) => {
+        if (id === 'path') return PROPERTIES.get(n.ref?.propertyPath ?? '')?.path;
+        const c = id === 'control' ? controlFor(n) : undefined;
+        return c ? controlExpr(c, ctrlsVar, layerVars, project.settings) : undefined;
+      },
     };
   };
   const renderTpl = (n: NodeInstance, text: string) => {
@@ -317,7 +321,9 @@ export function compile(input: Project | unknown, graphId: string, opts: Compile
     const d = def(n);
     const key = `${n.id}:${port}`;
     if (opts.preview?.overrides?.has(key)) return `__in(${JSON.stringify(key)})`;
-    if (d.special === 'ref.control') return controlExpr(controlFor(n)!, ctrlsVar, layerVars, project.settings);
+    if (d.special === 'ref.control' && !d.outputs.find((x) => x.id === port)?.expr) {
+      return controlExpr(controlFor(n)!, ctrlsVar, layerVars, project.settings);
+    }
     if (d.special === 'ref.layer') return layerVars.get(n.ref!.layerId!)!;
     const o = d.outputs.find((x) => x.id === port)!;
     return renderTpl(n, pickBranch(o.expr, scopeFor(n)));
@@ -336,7 +342,11 @@ export function compile(input: Project | unknown, graphId: string, opts: Compile
     const start = lines.length + 1;
     const vars = [...varNames.get(n.id)!];
     if (comments === 'verbose' || (comments === 'minimal' && vars.length)) lines.push(`// ${labelOf(n)}`);
-    for (const s of d.statements ?? []) lines.push(renderTpl(n, pickBranch(s, scopeFor(n))));
+    for (const s of d.statements ?? []) {
+      // A statement template may span several lines, or render empty (an optional branch).
+      const text = renderTpl(n, pickBranch(s, scopeFor(n)));
+      if (text.trim()) lines.push(...text.split('\n'));
+    }
     for (const [port, v] of vars) lines.push(`const ${v} = ${renderOutput(n, port)};`);
     sourceMap[n.id] = [start, lines.length];
   };

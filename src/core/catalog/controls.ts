@@ -9,15 +9,17 @@ export interface ControlInfo {
   /** Match name, emitted when settings.useMatchNames is on. TODO verify in AE (docs/ae-verification.md). */
   matchName: string;
   outputType: PortType;
+  /** Effect match name, used by the .jsx setup script to add the control. */
+  effectMatchName: string;
 }
 
 export const CONTROLS: Record<ControlType, ControlInfo> = {
-  slider: { label: 'Slider Control', paramName: 'Slider', matchName: 'ADBE Slider Control-0001', outputType: 'number' },
-  checkbox: { label: 'Checkbox Control', paramName: 'Checkbox', matchName: 'ADBE Checkbox Control-0001', outputType: 'number' },
-  dropdown: { label: 'Dropdown Menu Control', paramName: 'Menu', matchName: 'ADBE Dropdown Control-0001', outputType: 'number' },
-  color: { label: 'Color Control', paramName: 'Color', matchName: 'ADBE Color Control-0001', outputType: 'color' },
-  point: { label: 'Point Control', paramName: 'Point', matchName: 'ADBE Point Control-0001', outputType: 'vec2' },
-  point3d: { label: '3D Point Control', paramName: '3D Point', matchName: 'ADBE Point3D Control-0001', outputType: 'vec3' },
-  angle: { label: 'Angle Control', paramName: 'Angle', matchName: 'ADBE Angle Control-0001', outputType: 'number' },
-  layer: { label: 'Layer Control', paramName: 'Layer', matchName: 'ADBE Layer Control-0001', outputType: 'layer' },
+  slider: { label: 'Slider Control', paramName: 'Slider', matchName: 'ADBE Slider Control-0001', outputType: 'number', effectMatchName: 'ADBE Slider Control' },
+  checkbox: { label: 'Checkbox Control', paramName: 'Checkbox', matchName: 'ADBE Checkbox Control-0001', outputType: 'number', effectMatchName: 'ADBE Checkbox Control' },
+  dropdown: { label: 'Dropdown Menu Control', paramName: 'Menu', matchName: 'ADBE Dropdown Control-0001', outputType: 'number', effectMatchName: 'ADBE Dropdown Control' },
+  color: { label: 'Color Control', paramName: 'Color', matchName: 'ADBE Color Control-0001', outputType: 'color', effectMatchName: 'ADBE Color Control' },
+  point: { label: 'Point Control', paramName: 'Point', matchName: 'ADBE Point Control-0001', outputType: 'vec2', effectMatchName: 'ADBE Point Control' },
+  point3d: { label: '3D Point Control', paramName: '3D Point', matchName: 'ADBE Point3D Control-0001', outputType: 'vec3', effectMatchName: 'ADBE Point3D Control' },
+  angle: { label: 'Angle Control', paramName: 'Angle', matchName: 'ADBE Angle Control-0001', outputType: 'number', effectMatchName: 'ADBE Angle Control' },
+  layer: { label: 'Layer Control', paramName: 'Layer', matchName: 'ADBE Layer Control-0001', outputType: 'layer', effectMatchName: 'ADBE Layer Control' },
 };
