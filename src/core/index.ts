@@ -9,3 +9,7 @@ export { analyzeGraph, checkConnection, targetValueType, type GraphAnalysis, typ
 export { suggestConverter, type ConverterFix } from './typing/converters';
 export type { NodeTypes } from './typing/resolve';
 export { isValidIdentifier, camelCase } from './compiler/naming';
+export {
+  embedGraph, decodePayload, hasPayload, importGraph, hashBody, globalsSubset,
+  PAYLOAD_PREFIX, PAYLOAD_WARN_BYTES, type DecodedPayload, type EmbedResult,
+} from './compiler/embed';

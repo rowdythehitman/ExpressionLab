@@ -65,6 +65,7 @@ export const nodeDefSchema = z.object({
     .optional(),
   special: z.enum(['ref.control', 'ref.layer', 'ref.property', 'literal', 'output', 'reroute', 'comment']).optional(),
   inline: z.boolean().optional(),
+  noInline: z.boolean().optional(),
   source: z.string().optional(),
   verify: z.string().optional(),
 }) satisfies z.ZodType<NodeDef>;
@@ -122,6 +123,7 @@ export const settingsSchema = z.object({
   useMatchNames: z.boolean(),
   comments: z.enum(['none', 'minimal', 'verbose']),
   embedGraph: z.boolean(),
+  inlineSingleUse: z.boolean().optional(),
 });
 
 export const projectSchema = z.object({

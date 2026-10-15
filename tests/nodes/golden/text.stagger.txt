@@ -1,0 +1,6 @@
+// ExpressionLab · Text Selector Amount
+// Stagger
+const stagger_start = inPoint + (textIndex - 1) * 2 * thisComp.frameDuration;
+const stagger = ease(time, stagger_start, stagger_start + 8 * thisComp.frameDuration, 100, 0);
+
+stagger

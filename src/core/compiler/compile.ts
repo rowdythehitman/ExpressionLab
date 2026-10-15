@@ -226,7 +226,25 @@ export function compile(input: Project | unknown, graphId: string, opts: Compile
     }
   }
   const restSection = live.filter((n) => !placed.has(n.id) && def(n).special !== 'output');
-  const isInline = (n: NodeInstance) => isInlineDef(def(n));
+
+  // Inlining pass (Phase 2, opt-in): fold single-use, side-effect-free nodes into their consumer.
+  const consumerOf = new Map<string, string>();
+  const useCount = new Map<string, number>();
+  for (const e of edges) {
+    if (!reached.has(e.to.node)) continue;
+    useCount.set(e.from.node, (useCount.get(e.from.node) ?? 0) + 1);
+    consumerOf.set(e.from.node, e.to.node);
+  }
+  const folded = new Set<string>();
+  if (project.settings.inlineSingleUse) {
+    for (const n of restSection) {
+      const d = def(n);
+      const foldable = !isInlineDef(d) && !d.statements?.length && !d.locals?.length && !d.hoist
+        && !d.noInline && d.special !== 'ref.control';
+      if (foldable && useCount.get(n.id) === 1) folded.add(n.id);
+    }
+  }
+  const isInline = (n: NodeInstance) => isInlineDef(def(n)) || folded.has(n.id);
 
   const usedOutputs = new Map<string, string[]>();
   for (const e of edges) {
@@ -321,6 +339,12 @@ export function compile(input: Project | unknown, graphId: string, opts: Compile
   const final = edgeInto(outputNode, 'in');
   lines.push(final ? exprOf(final.from.node, final.from.port) : '');
   sourceMap[outputNode.id] = [lines.length, lines.length];
+  // Folded nodes live inside their consumer's code.
+  for (const id of folded) {
+    let c = consumerOf.get(id);
+    while (c && !sourceMap[c]) c = consumerOf.get(c);
+    if (c) sourceMap[id] = sourceMap[c]!;
+  }
 
   return result(lines.join('\n'), sourceMap);
 }

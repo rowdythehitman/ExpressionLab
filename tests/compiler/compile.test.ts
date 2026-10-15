@@ -128,3 +128,46 @@ describe('naming', () => {
     assertParses(code);
   });
 });
+
+describe('inlining pass', () => {
+  const graph = () =>
+    project({
+      nodes: [
+        node('t', 'ctx.time'),
+        node('a', 'math.op', 100, 0, { params: { op: 'add' }, inputs: { b: 1 } }),
+        node('m', 'math.op', 200, 0, { params: { op: 'mul' }, inputs: { b: 2 } }),
+        node('r', 'math.unary', 300, 0, { params: { fn: 'neg' } }),
+        node('o', 'output', 400),
+      ],
+      edges: [edge('t', 'out', 'a', 'a'), edge('a', 'out', 'm', 'a'), edge('m', 'out', 'r', 'a'), edge('r', 'out', 'o', 'in')],
+      target: { id: 'rotation' },
+    });
+
+  it('is off by default', () => {
+    expect(compile(graph(), 'g').code).toContain('const math = time + 1;');
+  });
+
+  it('folds single-use nodes with correct parentheses', () => {
+    const p = graph();
+    p.settings.inlineSingleUse = true;
+    const r = compile(p, 'g');
+    expect(r.code.split('\n').at(-1)).toBe('-((time + 1) * 2)');
+    expect(r.sourceMap.a).toEqual(r.sourceMap.o);
+    assertParses(r.code);
+  });
+
+  it('keeps multi-use nodes, controls and wiggle as variables', () => {
+    const p = goldenProject();
+    p.settings.inlineSingleUse = true;
+    expect(compile(p, 'g1').code).toContain('const wiggle1 = wiggle(wiggleFreq, wiggleAmp, 1, 0.5);');
+  });
+
+  it('wraps raw-code literals in operator positions', () => {
+    const p = project({
+      nodes: [node('m', 'math.op', 0, 0, { params: { op: 'mul' }, inputs: { a: 'time - 1', b: 2 } }), node('o', 'output', 100)],
+      edges: [edge('m', 'out', 'o', 'in')],
+      target: { id: 'rotation' },
+    });
+    expect(compile(p, 'g').code).toContain('const math = (time - 1) * 2;');
+  });
+});
