@@ -1,14 +1,11 @@
 // Compiler pipeline entry point (spec §7). Graph in, string + diagnostics out.
+import { PROPERTIES, TARGETS } from '../catalog';
 import { CONTROLS } from '../catalog/controls';
-import { TARGETS } from '../catalog';
 import { NODE_DEFS } from '../nodes';
 import { projectSchema } from '../schema';
-import {
-  innerType, isDimensionMismatch, isGeneric, substitute, typesCompatible, type Bindings,
-} from '../typing';
+import { paramValue, resolveTypes, type Incoming, type NodeTypes } from '../typing/resolve';
 import type {
-  CompileResult, ControlGlobal, Edge, Literal, NodeDef, NodeInstance, Project,
-  Settings, SourceMap, ValueType,
+  CompileResult, ControlGlobal, Edge, Literal, NodeDef, NodeInstance, Project, Settings, SourceMap,
 } from '../types';
 import { DiagnosticBag } from './diagnostics';
 import { camelCase, identifierFor, isValidIdentifier, NameAllocator } from './naming';
@@ -63,7 +60,7 @@ export function compile(input: Project | unknown, graphId: string, opts: Compile
     else diag.add('UNKNOWN_NODE_TYPE', `Unknown node type "${n.type}"`, { nodeId: n.id });
   }
   const edgeIds = new Set<string>();
-  const incoming = new Map<string, Map<string, Edge>>();
+  const incoming: Incoming = new Map();
   for (const e of graph.edges) {
     if (edgeIds.has(e.id)) diag.add('DUPLICATE_ID', `Duplicate edge id "${e.id}"`, { edgeId: e.id });
     edgeIds.add(e.id);
@@ -86,9 +83,9 @@ export function compile(input: Project | unknown, graphId: string, opts: Compile
   const nodeById = new Map(graph.nodes.map((n) => [n.id, n]));
   const def = (n: NodeInstance) => defs.get(n.id)!;
   const edgeInto = (n: NodeInstance, port: string) => incoming.get(n.id)?.get(port);
-  const labelOf = (n: NodeInstance) => n.name ?? (controlFor(n)?.effectName || def(n).label);
   const controlFor = (n: NodeInstance): ControlGlobal | undefined =>
     def(n).special === 'ref.control' ? project.globals.controls.find((c) => c.id === n.ref?.controlId) : undefined;
+  const labelOf = (n: NodeInstance) => n.name || controlFor(n)?.effectName || def(n).label;
 
   const outputNodes = graph.nodes.filter((n) => def(n).special === 'output');
   if (outputNodes.length === 0) diag.add('NO_OUTPUT', 'The graph has no Output node');
@@ -105,42 +102,9 @@ export function compile(input: Project | unknown, graphId: string, opts: Compile
   }
 
   // ---- 2. Resolve types ----
-  const outTypes = new Map<string, Map<string, string>>();
-  for (const n of order) {
-    const d = def(n);
-    const b: Bindings = {};
-    if (d.special === 'output') b.V = valueType;
-    for (const port of d.inputs) {
-      const e = edgeInto(n, port.id);
-      if (!e) continue;
-      const actual = outTypes.get(e.from.node)!.get(e.from.port)!;
-      const g = innerType(port.type);
-      if (isGeneric(port.type) && !b[g] && !isGeneric(actual)) {
-        const bound = innerType(actual) as ValueType;
-        const allowed = g === 'V' ? undefined : d.generics?.[g];
-        if (!allowed || allowed.includes(bound)) b[g] = bound;
-      }
-    }
-    b.V ??= valueType;
-    for (const port of d.inputs) {
-      const e = edgeInto(n, port.id);
-      if (!e) continue;
-      const actual = outTypes.get(e.from.node)!.get(e.from.port)!;
-      const expected = substitute(port.type, b);
-      if (!typesCompatible(expected, actual)) {
-        const code = isDimensionMismatch(expected, actual) ? 'DIM_MISMATCH' : 'TYPE_MISMATCH';
-        diag.add(code, `${d.label} › ${port.label}: expected ${expected}, got ${actual}`, { nodeId: n.id, edgeId: e.id });
-      }
-    }
-    const types = new Map<string, string>();
-    for (const o of d.outputs) types.set(o.id, substitute(o.type, b));
-    if (d.special === 'ref.control') {
-      const c = controlFor(n);
-      if (c) types.set('out', CONTROLS[c.type].outputType);
-      else diag.add('GLOBAL_NOT_FOUND', 'Control node does not point at a control in Globals', { nodeId: n.id });
-    }
-    outTypes.set(n.id, types);
-  }
+  const { types, issues } = resolveTypes(order, incoming, { defs: defsLib, globals: project.globals, valueType });
+  for (const i of issues) diag.add(i.code, i.message, { nodeId: i.nodeId, edgeId: i.edgeId });
+  const typesOf = (n: NodeInstance): NodeTypes => types.get(n.id)!;
   if (outputNodes.length !== 1) return result();
   const outputNode = outputNodes[0]!;
 
@@ -188,6 +152,9 @@ export function compile(input: Project | unknown, graphId: string, opts: Compile
     if (d.contexts && !d.contexts.some((c) => target.contexts.includes(c))) {
       diag.add('CONTEXT_UNAVAILABLE', `${d.label} only works on: ${d.contexts.join(', ')}`, { nodeId: n.id });
     }
+    if (d.contexts?.includes('textSelectorAmount')) {
+      diag.check('based-on', 'Check the Expression Selector\'s "Based On" setting (characters, words or lines)');
+    }
     if (d.requires?.minAE && d.requires.minAE > project.settings.aeTarget) {
       diag.add('MIN_AE_VERSION', `${d.label} needs After Effects ${d.requires.minAE}+`, { nodeId: n.id });
     }
@@ -211,7 +178,11 @@ export function compile(input: Project | unknown, graphId: string, opts: Compile
   const { globals } = project;
   const liveControls = live.map(controlFor).filter((c): c is ControlGlobal => !!c);
   const usedLayerIds = new Set<string>();
-  for (const n of live) if (def(n).special === 'ref.layer' && n.ref?.layerId) usedLayerIds.add(n.ref.layerId);
+  for (const n of live) {
+    if (def(n).special !== 'ref.layer') continue;
+    if (n.ref?.layerId) usedLayerIds.add(n.ref.layerId);
+    else diag.add('GLOBAL_NOT_FOUND', 'Pick a layer from Globals', { nodeId: n.id });
+  }
   for (const c of liveControls) if (typeof c.host === 'object') usedLayerIds.add(c.host.layerId);
 
   const preamble: string[] = [];
@@ -288,25 +259,28 @@ export function compile(input: Project | unknown, graphId: string, opts: Compile
   };
   const scopeFor = (n: NodeInstance): TemplateScope => {
     const d = def(n);
+    const t = typesOf(n);
     return {
       connected: (id) => !!edgeInto(n, id),
+      param: (id) => paramValue(n, d, id),
+      type: (name) => t.bindings[name] ?? t.inputs.get(name),
       input: (id) => {
         const e = edgeInto(n, id);
         if (e) return exprOf(e.from.node, e.from.port);
         const port = d.inputs.find((p) => p.id === id);
         const v = n.inputs[id] ?? port?.default;
-        return port && v !== undefined ? formatLiteral(v, port.type === 'string') : undefined;
+        return port && v !== undefined ? formatLiteral(v, t.inputs.get(id) ?? port.type) : undefined;
       },
-      param: (id) => {
+      paramText: (id) => {
         const p = d.params?.find((x) => x.id === id);
-        const v = n.params[id] ?? p?.default;
+        const v = paramValue(n, d, id) as Literal | undefined;
         if (!p || v === undefined) return undefined;
-        return p.emit === 'string' ? JSON.stringify(String(v)) : formatLiteral(v, false);
+        return p.emit === 'string' ? JSON.stringify(String(v)) : formatLiteral(v, 'raw');
       },
       local: (id) => localNames.get(n.id)?.get(id),
+      ref: (id) => (id === 'path' ? PROPERTIES.get(n.ref?.propertyPath ?? '')?.path : undefined),
     };
   };
-  const paramRaw = (n: NodeInstance) => (id: string) => n.params[id] ?? def(n).params?.find((p) => p.id === id)?.default;
   const renderTpl = (n: NodeInstance, text: string) => {
     const r = render(text, scopeFor(n));
     for (const u of r.unresolved) {
@@ -317,8 +291,9 @@ export function compile(input: Project | unknown, graphId: string, opts: Compile
   const renderOutput = (n: NodeInstance, port: string): string => {
     const d = def(n);
     if (d.special === 'ref.control') return controlExpr(controlFor(n)!, ctrlsVar, layerVars, project.settings);
+    if (d.special === 'ref.layer') return layerVars.get(n.ref!.layerId!)!;
     const o = d.outputs.find((x) => x.id === port)!;
-    return renderTpl(n, pickBranch(o.expr, scopeFor(n), paramRaw(n)));
+    return renderTpl(n, pickBranch(o.expr, scopeFor(n)));
   };
 
   const { comments } = project.settings;
@@ -334,7 +309,7 @@ export function compile(input: Project | unknown, graphId: string, opts: Compile
     const start = lines.length + 1;
     const vars = [...varNames.get(n.id)!];
     if (comments === 'verbose' || (comments === 'minimal' && vars.length)) lines.push(`// ${labelOf(n)}`);
-    for (const s of d.statements ?? []) lines.push(renderTpl(n, pickBranch(s, scopeFor(n), paramRaw(n))));
+    for (const s of d.statements ?? []) lines.push(renderTpl(n, pickBranch(s, scopeFor(n))));
     for (const [port, v] of vars) lines.push(`const ${v} = ${renderOutput(n, port)};`);
     sourceMap[n.id] = [start, lines.length];
   };
@@ -353,21 +328,27 @@ export function compile(input: Project | unknown, graphId: string, opts: Compile
 /** Nodes whose expression is substituted directly where used instead of getting a `const`. */
 function isInlineDef(d: NodeDef): boolean {
   if (d.statements?.length || d.locals?.length || d.hoist) return false;
-  return d.category === 'context' || d.special === 'literal' || d.special === 'ref.layer';
+  return d.category === 'context' || d.special === 'literal' || d.special === 'ref.layer' || !!d.inline;
 }
 
 /** Hoisted nodes may only depend on values that are the same wherever they are evaluated. */
 function isPure(d: NodeDef): boolean {
-  return !d.statements?.length && (d.category === 'context' || d.special === 'literal' || d.special === 'ref.control' || d.special === 'ref.layer');
+  if (d.statements?.length) return false;
+  return d.category === 'context' || d.special === 'literal' || d.special === 'ref.control' || d.special === 'ref.layer';
 }
 
+const DIMS: Record<string, number> = { vec2: 2, vec3: 3, color: 4 };
+
 /**
- * Literal → JS source. Strings on non-string ports are raw code (e.g. a default of `index`);
- * on string ports they are JSON-escaped.
+ * Literal → JS source for a port of the given (resolved) type.
+ * - string ports: JSON-escaped text
+ * - other ports: strings are raw code (e.g. a default of `index` or `time`)
+ * - a number on a vector port is broadcast ([n, n]), since the widget shows one value until edited
  */
-export function formatLiteral(v: Literal, isString: boolean): string {
+export function formatLiteral(v: Literal, type: string): string {
+  if (type === 'string') return JSON.stringify(String(v));
   if (Array.isArray(v)) return `[${v.join(', ')}]`;
-  if (typeof v === 'string') return isString ? JSON.stringify(v) : v;
+  if (typeof v === 'number' && DIMS[type]) return `[${Array(DIMS[type]).fill(v).join(', ')}]`;
   return String(v);
 }
 
@@ -377,4 +358,3 @@ function controlExpr(c: ControlGlobal, ctrlsVar: string, layerVars: Map<string, 
   const host = c.host === 'ctrls' ? `${ctrlsVar}.` : c.host === 'thisLayer' ? '' : `${layerVars.get(c.host.layerId)}.`;
   return `${host}effect(${JSON.stringify(c.effectName)})(${param})`;
 }
-

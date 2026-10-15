@@ -1,0 +1,9 @@
+// ExpressionLab · Opacity
+const CTRLS = thisComp.layer("CTRLS");
+
+// Enable
+const enable = CTRLS.effect("Enable")("Checkbox");
+// Checkbox Gate
+const checkboxGate = value * enable;
+
+checkboxGate

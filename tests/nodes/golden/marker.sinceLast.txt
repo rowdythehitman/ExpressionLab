@@ -1,0 +1,10 @@
+// ExpressionLab · Rotation
+// Time Since Marker
+let timeSinceMarker_n = 0;
+if (marker.numKeys > 0) {
+  timeSinceMarker_n = marker.nearestKey(time).index;
+  if (marker.key(timeSinceMarker_n).time > time) { timeSinceMarker_n--; }
+}
+const timeSinceMarkerSince = (timeSinceMarker_n > 0 ? time - marker.key(timeSinceMarker_n).time : 0);
+
+timeSinceMarkerSince

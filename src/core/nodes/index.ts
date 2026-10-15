@@ -3,10 +3,18 @@ import { nodeDefSchema } from '../schema';
 import type { NodeDef } from '../types';
 import context from './context.json';
 import globals from './globals.json';
+import math from './math.json';
+import vector from './vector.json';
 import animation from './animation.json';
+import logic from './logic.json';
+import space from './space.json';
+import text from './text.json';
+import marker from './marker.json';
 import utility from './utility.json';
 
-export const NODE_FILES: Record<string, unknown[]> = { context, globals, animation, utility };
+export const NODE_FILES: Record<string, unknown[]> = {
+  context, globals, math, vector, animation, logic, space, text, marker, utility,
+};
 
 function load(): Map<string, NodeDef> {
   const map = new Map<string, NodeDef>();

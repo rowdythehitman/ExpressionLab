@@ -1,0 +1,5 @@
+// ExpressionLab · Position (3D)
+// To World
+const toWorld1 = thisLayer.toWorld([0, 0, 0]);
+
+toWorld1

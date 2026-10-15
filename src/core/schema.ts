@@ -29,6 +29,7 @@ export const portDefSchema = z.object({
   min: z.number().optional(),
   max: z.number().optional(),
   step: z.number().optional(),
+  acceptsScalar: z.string().optional(),
 });
 
 export const paramDefSchema = z.object({
@@ -62,7 +63,8 @@ export const nodeDefSchema = z.object({
   requires: z
     .object({ keyframes: z.boolean().optional(), minAE: z.number().optional(), parent: z.boolean().optional() })
     .optional(),
-  special: z.enum(['ref.control', 'ref.layer', 'literal', 'output', 'reroute', 'comment']).optional(),
+  special: z.enum(['ref.control', 'ref.layer', 'ref.property', 'literal', 'output', 'reroute', 'comment']).optional(),
+  inline: z.boolean().optional(),
   source: z.string().optional(),
   verify: z.string().optional(),
 }) satisfies z.ZodType<NodeDef>;

@@ -1,0 +1,2 @@
+// ExpressionLab · Text Selector Amount
+textIndex

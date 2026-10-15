@@ -1,0 +1,5 @@
+// ExpressionLab · Rotation
+// Function
+const function1 = Math.round(0);
+
+function1

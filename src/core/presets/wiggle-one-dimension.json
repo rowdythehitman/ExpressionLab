@@ -1,0 +1,148 @@
+{
+  "version": 1,
+  "globals": {
+    "ctrls": {
+      "layerName": "CTRLS"
+    },
+    "layers": [],
+    "controls": [],
+    "comps": []
+  },
+  "graphs": [
+    {
+      "id": "wiggle-one-dimension",
+      "name": "Wiggle on One Dimension",
+      "target": {
+        "id": "position2D"
+      },
+      "nodes": [
+        {
+          "id": "wiggle",
+          "type": "anim.wiggle",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "inputs": {},
+          "params": {}
+        },
+        {
+          "id": "value",
+          "type": "ctx.value",
+          "position": {
+            "x": 0,
+            "y": 200
+          },
+          "inputs": {},
+          "params": {}
+        },
+        {
+          "id": "wiggled",
+          "type": "vec.split2",
+          "position": {
+            "x": 250,
+            "y": 0
+          },
+          "inputs": {},
+          "params": {},
+          "name": "Wiggled"
+        },
+        {
+          "id": "base",
+          "type": "vec.split2",
+          "position": {
+            "x": 250,
+            "y": 200
+          },
+          "inputs": {},
+          "params": {},
+          "name": "Base"
+        },
+        {
+          "id": "make",
+          "type": "vec.make2",
+          "position": {
+            "x": 500,
+            "y": 100
+          },
+          "inputs": {},
+          "params": {},
+          "name": "New Position"
+        },
+        {
+          "id": "out",
+          "type": "output",
+          "position": {
+            "x": 750,
+            "y": 100
+          },
+          "inputs": {},
+          "params": {}
+        }
+      ],
+      "edges": [
+        {
+          "id": "wiggle.out-wiggled.v",
+          "from": {
+            "node": "wiggle",
+            "port": "out"
+          },
+          "to": {
+            "node": "wiggled",
+            "port": "v"
+          }
+        },
+        {
+          "id": "value.out-base.v",
+          "from": {
+            "node": "value",
+            "port": "out"
+          },
+          "to": {
+            "node": "base",
+            "port": "v"
+          }
+        },
+        {
+          "id": "wiggled.x-make.x",
+          "from": {
+            "node": "wiggled",
+            "port": "x"
+          },
+          "to": {
+            "node": "make",
+            "port": "x"
+          }
+        },
+        {
+          "id": "base.y-make.y",
+          "from": {
+            "node": "base",
+            "port": "y"
+          },
+          "to": {
+            "node": "make",
+            "port": "y"
+          }
+        },
+        {
+          "id": "make.out-out.in",
+          "from": {
+            "node": "make",
+            "port": "out"
+          },
+          "to": {
+            "node": "out",
+            "port": "in"
+          }
+        }
+      ]
+    }
+  ],
+  "settings": {
+    "aeTarget": 26,
+    "useMatchNames": false,
+    "comments": "minimal",
+    "embedGraph": true
+  }
+}

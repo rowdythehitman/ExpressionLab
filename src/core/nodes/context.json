@@ -1,26 +1,21 @@
 [
-  {
-    "id": "ctx.value", "label": "Value", "category": "context",
-    "description": "The current value of the property the expression is applied to.",
-    "tags": ["value", "self", "property"],
-    "inputs": [],
-    "outputs": [{ "id": "out", "label": "Value", "type": "V", "expr": "value" }],
-    "verify": "Applied alone, the property is unchanged."
-  },
-  {
-    "id": "ctx.time", "label": "Time", "category": "context",
-    "description": "Current composition time in seconds.",
-    "tags": ["time", "seconds", "clock"],
-    "inputs": [],
-    "outputs": [{ "id": "out", "label": "Seconds", "type": "number", "expr": "time" }],
-    "verify": "On Rotation, the layer turns one degree per second."
-  },
-  {
-    "id": "ctx.index", "label": "Layer Index", "category": "context",
-    "description": "This layer's 1-based index in the composition.",
-    "tags": ["index", "layer", "number"],
-    "inputs": [],
-    "outputs": [{ "id": "out", "label": "Index", "type": "number", "expr": "index" }],
-    "verify": "On Rotation, the value equals the layer number in the timeline."
-  }
+  { "id": "ctx.value", "label": "Value", "category": "context", "description": "The current value of the property the expression is applied to.", "tags": ["value", "self", "property"], "inputs": [], "outputs": [{ "id": "out", "label": "Value", "type": "V", "expr": "value" }], "verify": "Applied alone, the property is unchanged." },
+  { "id": "ctx.time", "label": "Time", "category": "context", "description": "Current composition time in seconds.", "tags": ["time", "seconds", "clock"], "inputs": [], "outputs": [{ "id": "out", "label": "Seconds", "type": "number", "expr": "time" }], "verify": "On Rotation, the layer turns one degree per second." },
+  { "id": "ctx.index", "label": "Layer Index", "category": "context", "description": "This layer's 1-based index in the composition.", "tags": ["index", "layer", "number"], "inputs": [], "outputs": [{ "id": "out", "label": "Index", "type": "number", "expr": "index" }], "verify": "On Rotation, the value equals the layer number in the timeline." },
+  { "id": "ctx.inPoint", "label": "In Point", "category": "context", "description": "Comp time (seconds) at which this layer starts.", "tags": ["in", "start", "layer", "time"], "inputs": [], "outputs": [{ "id": "out", "label": "Seconds", "type": "number", "expr": "inPoint" }], "verify": "On Rotation, the value equals the layer's in point in seconds." },
+  { "id": "ctx.outPoint", "label": "Out Point", "category": "context", "description": "Comp time (seconds) at which this layer ends.", "tags": ["out", "end", "layer", "time"], "inputs": [], "outputs": [{ "id": "out", "label": "Seconds", "type": "number", "expr": "outPoint" }], "verify": "On Rotation, the value equals the layer's out point in seconds." },
+  { "id": "ctx.frameDuration", "label": "Frame Duration", "category": "context", "description": "Length of one frame in seconds (1 / fps).", "tags": ["frame", "duration", "fps"], "inputs": [], "outputs": [{ "id": "out", "label": "Seconds", "type": "number", "expr": "thisComp.frameDuration" }], "verify": "In a 25 fps comp, the value is 0.04." },
+  { "id": "ctx.fps", "label": "Frame Rate", "category": "context", "description": "The composition's frames per second.", "tags": ["fps", "frame rate"], "inputs": [], "outputs": [{ "id": "out", "label": "FPS", "type": "number", "expr": "(1 / thisComp.frameDuration)" }], "verify": "In a 25 fps comp, the value is 25." },
+  { "id": "ctx.compSize", "label": "Comp Size", "category": "context", "description": "[width, height] of the composition in pixels.", "tags": ["comp", "size", "width", "height", "resolution"], "inputs": [], "outputs": [{ "id": "out", "label": "Size", "type": "vec2", "expr": "[thisComp.width, thisComp.height]" }], "verify": "In a 1920x1080 comp, Position becomes [1920, 1080]." },
+  { "id": "ctx.compCenter", "label": "Comp Center", "category": "context", "description": "The centre point of the composition.", "tags": ["comp", "center", "centre", "middle"], "inputs": [], "outputs": [{ "id": "out", "label": "Center", "type": "vec2", "expr": "[thisComp.width / 2, thisComp.height / 2]" }], "verify": "On Position, the layer sits in the middle of the comp." },
+  { "id": "ctx.layerSize", "label": "Layer Size", "category": "context", "description": "[width, height] of this layer's source.", "tags": ["layer", "size", "width", "height"], "inputs": [], "outputs": [{ "id": "out", "label": "Size", "type": "vec2", "expr": "[thisLayer.width, thisLayer.height]" }], "verify": "On a 500x300 solid, the value is [500, 300]." },
+  { "id": "ctx.textIndex", "label": "Text Index", "category": "context", "description": "1-based index of the character/word/line being evaluated. Only exists in an Expression Selector's Amount.", "tags": ["text", "index", "character", "selector"], "contexts": ["textSelectorAmount"], "inputs": [], "outputs": [{ "id": "out", "label": "Index", "type": "number", "expr": "textIndex" }], "verify": "With Based On = Characters, the first character gets 1." },
+  { "id": "ctx.textTotal", "label": "Text Total", "category": "context", "description": "Number of characters/words/lines (per Based On). Only exists in an Expression Selector's Amount.", "tags": ["text", "total", "count", "selector"], "contexts": ["textSelectorAmount"], "inputs": [], "outputs": [{ "id": "out", "label": "Total", "type": "number", "expr": "textTotal" }], "verify": "For \"Hello\" with Based On = Characters, the value is 5." },
+  { "id": "ctx.selectorValue", "label": "Selector Value", "category": "context", "description": "Output of the selector above this one (default 100). Only exists in an Expression Selector's Amount.", "tags": ["text", "selector", "amount"], "contexts": ["textSelectorAmount"], "inputs": [], "outputs": [{ "id": "out", "label": "Value", "type": "number", "expr": "selectorValue" }], "verify": "With no selector above, the result is 100." },
+  { "id": "lit.number", "label": "Number", "category": "context", "special": "literal", "description": "A constant number.", "tags": ["number", "constant", "literal"], "inputs": [], "params": [{ "id": "value", "label": "Value", "kind": "number", "default": 0 }], "outputs": [{ "id": "out", "label": "Number", "type": "number", "expr": "{{param.value}}" }] },
+  { "id": "lit.vec2", "label": "Vector 2D", "category": "context", "special": "literal", "description": "A constant [x, y].", "tags": ["vector", "point", "constant", "2d"], "inputs": [], "params": [{ "id": "x", "label": "X", "kind": "number", "default": 0 }, { "id": "y", "label": "Y", "kind": "number", "default": 0 }], "outputs": [{ "id": "out", "label": "Vector", "type": "vec2", "expr": "[{{param.x}}, {{param.y}}]" }] },
+  { "id": "lit.vec3", "label": "Vector 3D", "category": "context", "special": "literal", "description": "A constant [x, y, z].", "tags": ["vector", "point", "constant", "3d"], "inputs": [], "params": [{ "id": "x", "label": "X", "kind": "number", "default": 0 }, { "id": "y", "label": "Y", "kind": "number", "default": 0 }, { "id": "z", "label": "Z", "kind": "number", "default": 0 }], "outputs": [{ "id": "out", "label": "Vector", "type": "vec3", "expr": "[{{param.x}}, {{param.y}}, {{param.z}}]" }] },
+  { "id": "lit.color", "label": "Colour", "category": "context", "special": "literal", "description": "A constant RGBA colour, each channel 0 to 1.", "tags": ["color", "colour", "rgba", "constant"], "inputs": [], "params": [{ "id": "r", "label": "R", "kind": "number", "default": 1 }, { "id": "g", "label": "G", "kind": "number", "default": 1 }, { "id": "b", "label": "B", "kind": "number", "default": 1 }, { "id": "a", "label": "A", "kind": "number", "default": 1 }], "outputs": [{ "id": "out", "label": "Colour", "type": "color", "expr": "[{{param.r}}, {{param.g}}, {{param.b}}, {{param.a}}]" }] },
+  { "id": "lit.string", "label": "Text", "category": "context", "special": "literal", "description": "A constant string.", "tags": ["string", "text", "constant"], "inputs": [], "params": [{ "id": "value", "label": "Text", "kind": "text", "default": "", "emit": "string" }], "outputs": [{ "id": "out", "label": "Text", "type": "string", "expr": "{{param.value}}" }] },
+  { "id": "lit.boolean", "label": "Boolean", "category": "context", "special": "literal", "description": "A constant true/false.", "tags": ["boolean", "true", "false", "constant"], "inputs": [], "params": [{ "id": "value", "label": "Value", "kind": "checkbox", "default": true }], "outputs": [{ "id": "out", "label": "Value", "type": "boolean", "expr": "{{param.value}}" }] }
 ]

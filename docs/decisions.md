@@ -29,3 +29,34 @@ Choices made where the spec (docs/SPEC.md) said "decide" or was ambiguous. Newes
     into the same input) and `DUPLICATE_ID`, for the zod and structure checks in §7.1 step 1.
 14. **Tooling:** TypeScript is pinned to 5.9 (typescript-eslint support). React Flow, Zustand and CodeMirror will be
     installed in Phase 1, when the UI that needs them is built.
+
+## Phase 1
+
+15. **Vector maths uses AE's functions.** `add()`, `sub()`, `mul(vec, n)` and `div(vec, n)` are used, and element-wise ops
+    use `.map(...)`. We don't rely on `+`/`-` working on arrays in the JS engine. Number maths keeps plain operators. To
+    allow this, templates can branch on resolved types. **Verify in AE** that the `.map` forms evaluate as expected.
+16. **Extensions to the NodeDef format**:
+    - The `when` grammar gains `&&`, `||` and `type.X == "..."`, where X is a generic (`T`, `V`) or an input id (its
+      resolved type).
+    - `PortDef.acceptsScalar` is a `when` condition under which a `number` may feed a generic vector port (`math.op`
+      mul/div, spec §6 rule 1).
+    - `NodeDef.inline` substitutes the expression where it's used instead of emitting a `const`. Used by `thisLayer`,
+      `parent`, `hasParent` and `ref.property`.
+    - `special: 'ref.property'` plus a `{{ref.path}}` placeholder, resolved from `catalog/properties.json`.
+17. **Generic fallback.** An unbound generic resolves from a literal array's length (2 → vec2, 3 → vec3, 4 → color). If
+    that fails, it uses the first type in the node's `generics` list (usually `number`). `V` falls back to the target
+    type. A number literal on a vector port is broadcast (`0` → `[0, 0]`).
+18. **Broadcast is two nodes** (`vec.broadcast2` / `vec.broadcast3`). A node's output type can't depend on a param.
+19. **Trig in degrees** emits `Math.sin(degreesToRadians(a))`. The spec's `sinDeg` isn't documented AE API, so we avoid it.
+20. **Remap, unclamped** extrapolates linearly whatever the mode, because the AE ease functions always clamp.
+21. **`ref.property` catalog** covers the transform properties and Source Text. Paths are emitted in dot notation
+    (`thisLayer.transform.position`). Match names are recorded in the catalog but not emitted yet. Position, scale and
+    anchor are vec3 when the wired layer global is 3D, or when there's no layer and the target is 3D.
+22. **Checkbox controls output `number`** (0/1), as the spec says. Use Checkbox Gate to multiply, or Compare (`== 1`) to
+    get a boolean.
+23. **Presets are full project files.** Loading one replaces the current project; it can be undone.
+24. **Undo coalescing.** Edits with the same key within 800 ms (typing in a widget, one drag) count as one undo step.
+25. **Moved to Phase 2:** `Tab` quick-add (listed in Phase 2 in §14) and "Copy clean" (only meaningful once the embedded
+    payload exists).
+26. **To verify in AE:** that `toComp`/`fromComp`/`toWorld`/`fromWorld` keep the input point's dimensions (they're typed
+    `T` → `T`).

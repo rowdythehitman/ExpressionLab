@@ -1,0 +1,5 @@
+// ExpressionLab · Position (3D)
+// Drop Alpha
+const dropAlpha = [[1, 1, 1, 1][0], [1, 1, 1, 1][1], [1, 1, 1, 1][2]];
+
+dropAlpha

@@ -1,0 +1,6 @@
+// ExpressionLab · Rotation
+// Random
+seedRandom(index, true);
+const random1 = random(0, 100);
+
+random1

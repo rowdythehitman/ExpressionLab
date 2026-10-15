@@ -1,0 +1,5 @@
+// ExpressionLab · Rotation
+// Wiggle
+const wiggle1 = wiggle(2, 50, 1, 0.5);
+
+wiggle1

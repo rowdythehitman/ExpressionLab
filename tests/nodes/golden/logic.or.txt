@@ -1,0 +1,5 @@
+// ExpressionLab · Custom
+// Or
+const or = (false || false);
+
+or

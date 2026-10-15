@@ -1,0 +1,5 @@
+// ExpressionLab · Position (2D)
+// To Comp
+const toComp1 = thisLayer.toComp([0, 0]);
+
+toComp1

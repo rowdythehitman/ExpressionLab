@@ -1,0 +1,5 @@
+// ExpressionLab · Rotation
+// Distance
+const distance = length([0, 0], [0, 0]);
+
+distance

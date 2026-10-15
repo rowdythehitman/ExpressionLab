@@ -1,0 +1,5 @@
+// ExpressionLab · Rotation
+// Split Colour
+const splitColourR = [1, 1, 1, 1][0];
+
+splitColourR

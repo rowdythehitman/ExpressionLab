@@ -1,0 +1,137 @@
+[
+  {
+    "id": "math.op", "label": "Math", "category": "math",
+    "description": "a + b, a - b, a × b ... Works on numbers and vectors; vectors can be multiplied or divided by a number.",
+    "tags": ["add", "subtract", "multiply", "divide", "modulo", "power", "min", "max", "plus", "minus", "times"],
+    "generics": { "T": ["number", "vec2", "vec3", "color"] },
+    "inputs": [
+      { "id": "a", "label": "A", "type": "T", "default": 0 },
+      { "id": "b", "label": "B", "type": "T", "default": 0, "acceptsScalar": "param.op == \"mul\" || param.op == \"div\"" }
+    ],
+    "params": [{ "id": "op", "label": "Operation", "kind": "select", "options": ["add", "sub", "mul", "div", "mod", "pow", "min", "max"], "default": "add" }],
+    "outputs": [{
+      "id": "out", "label": "Result", "type": "T",
+      "expr": [
+        { "when": "type.T == \"number\" && param.op == \"add\"", "text": "{{in.a}} + {{in.b}}" },
+        { "when": "type.T == \"number\" && param.op == \"sub\"", "text": "{{in.a}} - {{in.b}}" },
+        { "when": "type.T == \"number\" && param.op == \"mul\"", "text": "{{in.a}} * {{in.b}}" },
+        { "when": "type.T == \"number\" && param.op == \"div\"", "text": "{{in.a}} / {{in.b}}" },
+        { "when": "type.T == \"number\" && param.op == \"mod\"", "text": "{{in.a}} % {{in.b}}" },
+        { "when": "type.T == \"number\" && param.op == \"pow\"", "text": "Math.pow({{in.a}}, {{in.b}})" },
+        { "when": "type.T == \"number\" && param.op == \"min\"", "text": "Math.min({{in.a}}, {{in.b}})" },
+        { "when": "type.T == \"number\" && param.op == \"max\"", "text": "Math.max({{in.a}}, {{in.b}})" },
+        { "when": "param.op == \"add\"", "text": "add({{in.a}}, {{in.b}})" },
+        { "when": "param.op == \"sub\"", "text": "sub({{in.a}}, {{in.b}})" },
+        { "when": "param.op == \"mul\" && type.b == \"number\"", "text": "mul({{in.a}}, {{in.b}})" },
+        { "when": "param.op == \"div\" && type.b == \"number\"", "text": "div({{in.a}}, {{in.b}})" },
+        { "when": "param.op == \"mul\"", "text": "{{in.a}}.map((v, i) => v * {{in.b}}[i])" },
+        { "when": "param.op == \"div\"", "text": "{{in.a}}.map((v, i) => v / {{in.b}}[i])" },
+        { "when": "param.op == \"mod\"", "text": "{{in.a}}.map((v, i) => v % {{in.b}}[i])" },
+        { "when": "param.op == \"pow\"", "text": "{{in.a}}.map((v, i) => Math.pow(v, {{in.b}}[i]))" },
+        { "when": "param.op == \"min\"", "text": "{{in.a}}.map((v, i) => Math.min(v, {{in.b}}[i]))" },
+        { "text": "{{in.a}}.map((v, i) => Math.max(v, {{in.b}}[i]))" }
+      ]
+    }],
+    "verify": "On Position with A = [100, 100], B = [10, 20], add gives [110, 120]; mul by 2 gives [200, 200]."
+  },
+  {
+    "id": "math.unary", "label": "Function", "category": "math",
+    "description": "abs, floor, ceil, round, sqrt or negate a number.",
+    "tags": ["abs", "floor", "ceil", "round", "sqrt", "negate", "integer"],
+    "inputs": [{ "id": "a", "label": "A", "type": "number", "default": 0 }],
+    "params": [{ "id": "fn", "label": "Function", "kind": "select", "options": ["abs", "floor", "ceil", "round", "sqrt", "neg"], "default": "round" }],
+    "outputs": [{
+      "id": "out", "label": "Result", "type": "number",
+      "expr": [
+        { "when": "param.fn == \"neg\"", "text": "-({{in.a}})" },
+        { "text": "Math.{{param.fn}}({{in.a}})" }
+      ]
+    }],
+    "verify": "round(time) on Rotation steps by one degree each second."
+  },
+  {
+    "id": "math.trig", "label": "Trig", "category": "math",
+    "description": "sin, cos or tan of an angle in degrees or radians.",
+    "tags": ["sin", "cos", "tan", "sine", "cosine", "oscillate", "wave"],
+    "inputs": [{ "id": "a", "label": "Angle", "type": "number", "default": 0, "widget": "angle" }],
+    "params": [
+      { "id": "fn", "label": "Function", "kind": "select", "options": ["sin", "cos", "tan"], "default": "sin" },
+      { "id": "unit", "label": "Unit", "kind": "select", "options": ["deg", "rad"], "default": "deg" }
+    ],
+    "outputs": [{
+      "id": "out", "label": "Result", "type": "number",
+      "expr": [
+        { "when": "param.unit == \"deg\"", "text": "Math.{{param.fn}}(degreesToRadians({{in.a}}))" },
+        { "text": "Math.{{param.fn}}({{in.a}})" }
+      ]
+    }],
+    "verify": "sin of 90 degrees is 1."
+  },
+  {
+    "id": "math.clamp", "label": "Clamp", "category": "math",
+    "description": "Limits a value (each component of a vector) to [min, max].",
+    "tags": ["clamp", "limit", "range", "constrain"],
+    "generics": { "T": ["number", "vec2", "vec3", "color"] },
+    "inputs": [
+      { "id": "v", "label": "Value", "type": "T", "default": 0 },
+      { "id": "min", "label": "Min", "type": "number", "default": 0 },
+      { "id": "max", "label": "Max", "type": "number", "default": 100 }
+    ],
+    "outputs": [{
+      "id": "out", "label": "Result", "type": "T",
+      "expr": [
+        { "when": "type.T == \"number\"", "text": "clamp({{in.v}}, {{in.min}}, {{in.max}})" },
+        { "text": "{{in.v}}.map((c) => clamp(c, {{in.min}}, {{in.max}}))" }
+      ]
+    }],
+    "verify": "Clamp(time * 50, 0, 100) on Opacity stops at 100."
+  },
+  {
+    "id": "math.remap", "label": "Remap", "category": "math",
+    "description": "Maps t from [inMin, inMax] to [outMin, outMax] with linear or eased interpolation. Unclamped mode extrapolates linearly.",
+    "tags": ["remap", "map", "range", "linear", "ease", "interpolate", "lerp"],
+    "generics": { "T": ["number", "vec2", "vec3", "color"] },
+    "inputs": [
+      { "id": "t", "label": "t", "type": "number", "default": "time" },
+      { "id": "inMin", "label": "In min", "type": "number", "default": 0 },
+      { "id": "inMax", "label": "In max", "type": "number", "default": 1 },
+      { "id": "outMin", "label": "Out min", "type": "T", "default": 0 },
+      { "id": "outMax", "label": "Out max", "type": "T", "default": 100 }
+    ],
+    "params": [
+      { "id": "mode", "label": "Mode", "kind": "select", "options": ["linear", "ease", "easeIn", "easeOut"], "default": "linear" },
+      { "id": "clamp", "label": "Clamp", "kind": "checkbox", "default": true }
+    ],
+    "outputs": [{
+      "id": "out", "label": "Result", "type": "T",
+      "expr": [
+        { "when": "param.clamp == \"true\"", "text": "{{param.mode}}({{in.t}}, {{in.inMin}}, {{in.inMax}}, {{in.outMin}}, {{in.outMax}})" },
+        { "when": "type.T == \"number\"", "text": "{{in.outMin}} + ({{in.outMax}} - {{in.outMin}}) * (({{in.t}} - {{in.inMin}}) / ({{in.inMax}} - {{in.inMin}}))" },
+        { "text": "add({{in.outMin}}, mul(sub({{in.outMax}}, {{in.outMin}}), ({{in.t}} - {{in.inMin}}) / ({{in.inMax}} - {{in.inMin}})))" }
+      ]
+    }],
+    "verify": "Remap(time, 0, 1, 0, 100) on Opacity fades in over the first second."
+  },
+  {
+    "id": "math.random", "label": "Random", "category": "math",
+    "description": "Random number between min and max. Seeded (default: layer index); 'timeless' keeps it fixed over time. Note: seedRandom also affects later wiggle/random calls.",
+    "tags": ["random", "seed", "frozen", "noise"],
+    "inputs": [
+      { "id": "min", "label": "Min", "type": "number", "default": 0 },
+      { "id": "max", "label": "Max", "type": "number", "default": 100 },
+      { "id": "seed", "label": "Seed", "type": "number", "default": "index" }
+    ],
+    "params": [{ "id": "timeless", "label": "Timeless", "kind": "checkbox", "default": true }],
+    "statements": ["seedRandom({{in.seed}}, {{param.timeless}});"],
+    "outputs": [{ "id": "out", "label": "Value", "type": "number", "expr": "random({{in.min}}, {{in.max}})" }],
+    "verify": "Duplicated layers each get a different, constant value."
+  },
+  {
+    "id": "math.noise", "label": "Noise", "category": "math",
+    "description": "Smooth Perlin noise in [-1, 1].",
+    "tags": ["noise", "perlin", "smooth", "random"],
+    "inputs": [{ "id": "a", "label": "Input", "type": "number", "default": "time" }],
+    "outputs": [{ "id": "out", "label": "Value", "type": "number", "expr": "noise({{in.a}})" }],
+    "verify": "noise(time) * 50 on Rotation drifts smoothly."
+  }
+]

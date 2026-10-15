@@ -1,0 +1,5 @@
+// ExpressionLab · Source Text
+// Join Text
+const joinText = "" + "";
+
+joinText

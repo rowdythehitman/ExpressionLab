@@ -1,0 +1,5 @@
+// ExpressionLab · Rotation
+// Remap
+const remap = linear(time, 0, 1, 0, 100);
+
+remap

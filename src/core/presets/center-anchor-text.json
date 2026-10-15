@@ -1,0 +1,149 @@
+{
+  "version": 1,
+  "globals": {
+    "ctrls": {
+      "layerName": "CTRLS"
+    },
+    "layers": [],
+    "controls": [],
+    "comps": []
+  },
+  "graphs": [
+    {
+      "id": "center-anchor-text",
+      "name": "Center Anchor Point Vertically on Text",
+      "target": {
+        "id": "anchorPoint2D"
+      },
+      "nodes": [
+        {
+          "id": "rect",
+          "type": "layer.sourceRect",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "inputs": {},
+          "params": {},
+          "name": "Text Box"
+        },
+        {
+          "id": "value",
+          "type": "ctx.value",
+          "position": {
+            "x": 0,
+            "y": 200
+          },
+          "inputs": {},
+          "params": {}
+        },
+        {
+          "id": "center",
+          "type": "vec.split2",
+          "position": {
+            "x": 250,
+            "y": 0
+          },
+          "inputs": {},
+          "params": {},
+          "name": "Center"
+        },
+        {
+          "id": "anchor",
+          "type": "vec.split2",
+          "position": {
+            "x": 250,
+            "y": 200
+          },
+          "inputs": {},
+          "params": {},
+          "name": "Anchor"
+        },
+        {
+          "id": "make",
+          "type": "vec.make2",
+          "position": {
+            "x": 500,
+            "y": 100
+          },
+          "inputs": {},
+          "params": {},
+          "name": "Centered Anchor"
+        },
+        {
+          "id": "out",
+          "type": "output",
+          "position": {
+            "x": 750,
+            "y": 100
+          },
+          "inputs": {},
+          "params": {}
+        }
+      ],
+      "edges": [
+        {
+          "id": "rect.center-center.v",
+          "from": {
+            "node": "rect",
+            "port": "center"
+          },
+          "to": {
+            "node": "center",
+            "port": "v"
+          }
+        },
+        {
+          "id": "value.out-anchor.v",
+          "from": {
+            "node": "value",
+            "port": "out"
+          },
+          "to": {
+            "node": "anchor",
+            "port": "v"
+          }
+        },
+        {
+          "id": "anchor.x-make.x",
+          "from": {
+            "node": "anchor",
+            "port": "x"
+          },
+          "to": {
+            "node": "make",
+            "port": "x"
+          }
+        },
+        {
+          "id": "center.y-make.y",
+          "from": {
+            "node": "center",
+            "port": "y"
+          },
+          "to": {
+            "node": "make",
+            "port": "y"
+          }
+        },
+        {
+          "id": "make.out-out.in",
+          "from": {
+            "node": "make",
+            "port": "out"
+          },
+          "to": {
+            "node": "out",
+            "port": "in"
+          }
+        }
+      ]
+    }
+  ],
+  "settings": {
+    "aeTarget": 26,
+    "useMatchNames": false,
+    "comments": "minimal",
+    "embedGraph": true
+  }
+}

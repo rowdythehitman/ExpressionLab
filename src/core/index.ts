@@ -2,6 +2,10 @@
 export * from './types';
 export { compile, formatLiteral, APP_NAME, type CompileOptions } from './compiler/compile';
 export { NODE_DEFS } from './nodes';
-export { TARGETS, RESERVED } from './catalog';
+export { TARGETS, PROPERTIES, RESERVED } from './catalog';
 export { CONTROLS } from './catalog/controls';
 export { projectSchema, nodeDefSchema, DEFAULT_SETTINGS } from './schema';
+export { analyzeGraph, checkConnection, targetValueType, type GraphAnalysis, type ConnectionCheck } from './typing/analyze';
+export { suggestConverter, type ConverterFix } from './typing/converters';
+export type { NodeTypes } from './typing/resolve';
+export { isValidIdentifier, camelCase } from './compiler/naming';

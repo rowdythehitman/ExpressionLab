@@ -8,13 +8,22 @@ clean, readable AE expression that you paste into After Effects. Fully client-si
 
 ## Status
 
-**Phase 0 (skeleton): done.** Typed data model and zod schemas, a node library stored as JSON, and a pure compiler
-(`src/core`, no React or DOM) that reproduces the spec's golden example
-([`tests/compiler/golden/posterized-wiggle.txt`](tests/compiler/golden/posterized-wiggle.txt)). The UI is a placeholder
-that shows the compiled preset, its diagnostics and its setup checklist.
+**Phase 1 (MVP): done.**
 
-Next: Phase 1 (MVP). That means the Globals panel, React Flow canvas, ~25 nodes, typed ports with converter quick-fixes,
-autosave, and import/export.
+- **Editor:** a node canvas (React Flow) with typed ports. Each port type has its own colour and shape, and unconnected
+  inputs get inline widgets. A wrong-type connection is refused with the reason and a one-click converter quick-fix.
+- **Globals strip:** the pinned CTRLS layer plus layers, controls and comps. Rename once and every expression updates.
+- **Target selector:** includes a 3D-layer toggle. Edges that no longer fit after a target change are kept and shown in red.
+- **Node palette:** searchable, with 69 nodes. Nodes that don't fit the current target are disabled and say why.
+- **Output panel:** live compiled expression, a Copy button (`Ctrl/Cmd+Shift+C`), clickable diagnostics and the setup
+  checklist.
+- **Project handling:** six presets, `.aenodes.json` import/export, autosave to IndexedDB, and undo/redo.
+
+The compiler (`src/core`) is pure TypeScript with no React or DOM code. It is tested with a golden output for every node
+and preset, a fuzz suite of random graphs, and an acorn parse check on everything it emits.
+
+Next: Phase 2 (embedded graph payload and paste-back, source-map highlighting, inlining, multi-graph tabs, mock AE
+runtime, `docs/ae-verification.md`, quick-add).
 
 ## Develop
 

@@ -1,0 +1,5 @@
+// ExpressionLab · Rotation
+// Split Vec2
+const splitVec2X = [0, 0][0];
+
+splitVec2X

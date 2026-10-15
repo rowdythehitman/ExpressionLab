@@ -27,6 +27,11 @@ export interface PortDef {
   min?: number;
   max?: number;
   step?: number;
+  /**
+   * `when` condition under which a plain `number` is also accepted on this generic port
+   * (native AE `vecN * number`, spec §6 rule 1). Extension to the spec's PortDef.
+   */
+  acceptsScalar?: string;
 }
 
 export interface ParamDef {
@@ -50,7 +55,8 @@ export interface OutputDef {
   expr: Tpl;
 }
 
-export type SpecialKind = 'ref.control' | 'ref.layer' | 'literal' | 'output' | 'reroute' | 'comment';
+export type SpecialKind =
+  | 'ref.control' | 'ref.layer' | 'ref.property' | 'literal' | 'output' | 'reroute' | 'comment';
 
 export interface NodeDef {
   id: string;
@@ -69,6 +75,8 @@ export interface NodeDef {
   contexts?: string[];
   requires?: { keyframes?: boolean; minAE?: number; parent?: boolean };
   special?: SpecialKind;
+  /** Substitute the expression where it's used instead of emitting a `const` (refs, literals). */
+  inline?: boolean;
   source?: string;
   verify?: string;
 }
@@ -157,6 +165,16 @@ export interface TargetDef {
   /** Context names that node `contexts` lists are checked against. */
   contexts: string[];
   applyTo: string;
+}
+
+/** Entry in catalog/properties.json, used by ref.property. */
+export interface PropertyDef {
+  path: string;
+  label: string;
+  type: ValueType;
+  /** Type on a 3D layer, when it differs. */
+  type3D?: ValueType;
+  matchName?: string;
 }
 
 // ---- Compiler output ----

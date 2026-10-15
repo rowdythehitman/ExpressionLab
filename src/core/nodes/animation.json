@@ -22,6 +22,69 @@
     "verify": "Position wiggles around its base value; changing the freq control changes speed."
   },
   {
+    "id": "anim.loopWiggle", "label": "Looping Wiggle", "category": "animation",
+    "description": "Wiggle that seamlessly loops every N seconds.",
+    "tags": ["wiggle", "loop", "seamless"],
+    "inputs": [
+      { "id": "freq", "label": "Freq /s", "type": "number", "default": 2 },
+      { "id": "amp", "label": "Amount", "type": "number", "default": 40 },
+      { "id": "loopSeconds", "label": "Loop (s)", "type": "number", "default": 3 }
+    ],
+    "locals": ["t"],
+    "statements": ["const {{local.t}} = time % {{in.loopSeconds}};"],
+    "outputs": [{
+      "id": "out", "label": "Value", "type": "V",
+      "expr": "linear({{local.t}}, 0, {{in.loopSeconds}}, wiggle({{in.freq}}, {{in.amp}}, 1, 0.5, {{local.t}}), wiggle({{in.freq}}, {{in.amp}}, 1, 0.5, {{local.t}} - {{in.loopSeconds}}))"
+    }],
+    "source": "aereference.com (pattern); reimplemented",
+    "verify": "Frame at t and t + loopSeconds are identical."
+  },
+  {
+    "id": "anim.loop", "label": "Loop Keyframes", "category": "animation",
+    "description": "Loops the property's keyframes after the last key (out), before the first (in), or both.",
+    "tags": ["loop", "loopOut", "loopIn", "cycle", "pingpong", "repeat"],
+    "requires": { "keyframes": true },
+    "inputs": [{ "id": "prop", "label": "Property", "type": "property<V>", "optional": true }],
+    "params": [
+      { "id": "mode", "label": "Mode", "kind": "select", "options": ["cycle", "pingpong", "offset", "continue"], "default": "cycle", "emit": "string" },
+      { "id": "dir", "label": "Direction", "kind": "select", "options": ["out", "in", "both"], "default": "out" }
+    ],
+    "outputs": [{
+      "id": "out", "label": "Value", "type": "V",
+      "expr": [
+        { "when": "param.dir == \"out\" && connected(prop)", "text": "{{in.prop}}.loopOut({{param.mode}})" },
+        { "when": "param.dir == \"out\"", "text": "loopOut({{param.mode}})" },
+        { "when": "param.dir == \"in\" && connected(prop)", "text": "{{in.prop}}.loopIn({{param.mode}})" },
+        { "when": "param.dir == \"in\"", "text": "loopIn({{param.mode}})" },
+        { "when": "connected(prop) && type.V == \"number\"", "text": "{{in.prop}}.loopIn({{param.mode}}) + {{in.prop}}.loopOut({{param.mode}}) - {{in.prop}}.value" },
+        { "when": "connected(prop)", "text": "sub(add({{in.prop}}.loopIn({{param.mode}}), {{in.prop}}.loopOut({{param.mode}})), {{in.prop}}.value)" },
+        { "when": "type.V == \"number\"", "text": "loopIn({{param.mode}}) + loopOut({{param.mode}}) - value" },
+        { "text": "sub(add(loopIn({{param.mode}}), loopOut({{param.mode}})), value)" }
+      ]
+    }],
+    "verify": "With 2 keyframes, the animation repeats after the last key (out) and before the first key (in / both)."
+  },
+  {
+    "id": "anim.valueAtTime", "label": "Value at Time", "category": "animation",
+    "description": "A property's value at another time, e.g. time - delay. Reference a fixed layer, not index - 1.",
+    "tags": ["valueAtTime", "delay", "offset", "time", "echo", "follow"],
+    "generics": { "T": ["number", "vec2", "vec3", "color", "string"] },
+    "inputs": [
+      { "id": "prop", "label": "Property", "type": "property<T>" },
+      { "id": "t", "label": "Time", "type": "number", "default": "time" }
+    ],
+    "outputs": [{ "id": "out", "label": "Value", "type": "T", "expr": "{{in.prop}}.valueAtTime({{in.t}})" }],
+    "verify": "With t = time - 0.5, the layer follows the referenced property half a second late."
+  },
+  {
+    "id": "anim.delayByIndex", "label": "Delay by Index", "category": "animation",
+    "description": "frames × frameDuration × (index - 1): a per-layer delay in seconds. Feed it into Value at Time (time - delay) on a fixed layer.",
+    "tags": ["delay", "stagger", "offset", "index", "cascade"],
+    "inputs": [{ "id": "frames", "label": "Frames", "type": "number", "default": 2 }],
+    "outputs": [{ "id": "out", "label": "Seconds", "type": "number", "expr": "{{in.frames}} * thisComp.frameDuration * (index - 1)" }],
+    "verify": "Layer 3 with frames = 2 returns 4 frames' worth of seconds."
+  },
+  {
     "id": "anim.posterize", "label": "Posterize Time", "category": "animation",
     "description": "Evaluates the whole expression at a lower frame rate (stop-motion look).",
     "tags": ["posterize", "fps", "stop motion", "choppy", "framerate"],

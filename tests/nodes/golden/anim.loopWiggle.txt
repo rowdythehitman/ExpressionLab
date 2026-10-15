@@ -1,0 +1,6 @@
+// ExpressionLab · Rotation
+// Looping Wiggle
+const loopingWiggle_t = time % 3;
+const loopingWiggle = linear(loopingWiggle_t, 0, 3, wiggle(2, 40, 1, 0.5, loopingWiggle_t), wiggle(2, 40, 1, 0.5, loopingWiggle_t - 3));
+
+loopingWiggle

@@ -1,0 +1,5 @@
+// ExpressionLab · Rotation
+// Pick Component
+const pickComponent = [0, 0][0];
+
+pickComponent

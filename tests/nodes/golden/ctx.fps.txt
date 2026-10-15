@@ -1,0 +1,2 @@
+// ExpressionLab · Rotation
+(1 / thisComp.frameDuration)

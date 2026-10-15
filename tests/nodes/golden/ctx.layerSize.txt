@@ -1,0 +1,2 @@
+// ExpressionLab · Position (2D)
+[thisLayer.width, thisLayer.height]

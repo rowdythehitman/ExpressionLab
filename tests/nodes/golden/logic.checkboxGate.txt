@@ -1,0 +1,5 @@
+// ExpressionLab · Rotation
+// Checkbox Gate
+const checkboxGate = 0 * 1;
+
+checkboxGate

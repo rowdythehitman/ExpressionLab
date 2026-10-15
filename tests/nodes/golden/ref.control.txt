@@ -1,0 +1,7 @@
+// ExpressionLab · Rotation
+const CTRLS = thisComp.layer("CTRLS");
+
+// Amount
+const amount = CTRLS.effect("Amount")("Slider");
+
+amount
