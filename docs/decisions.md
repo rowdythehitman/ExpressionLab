@@ -60,3 +60,32 @@ Choices made where the spec (docs/SPEC.md) said "decide" or was ambiguous. Newes
     payload exists).
 26. **To verify in AE:** that `toComp`/`fromComp`/`toWorld`/`fromWorld` keep the input point's dimensions (they're typed
     `T` → `T`).
+
+## Phase 2
+
+27. **Payload hash** is FNV-1a (32-bit) over the body with normalised line endings and trailing whitespace, so a
+    copy-paste round trip through AE (CRLF, trailing spaces) doesn't count as an edit. It detects edits; it isn't
+    security.
+28. **Payload globals** hold only what the graph references: CTRLS plus the layers and controls it uses. On import,
+    globals merge by id and **the project's existing definitions win**. Missing ones are added. A graph whose id or name
+    already exists gets a new id and an " (imported)" suffix.
+29. **Payload size** is reported in the UI (the compressed line is built asynchronously, after `compile()`).
+    `PAYLOAD_TOO_LARGE` is added there, not by the compiler.
+30. **Parenthesisation** happens in the template engine. A substituted input is wrapped in `( )` when it isn't atomic
+    (an operator, space or comma at depth 0, outside strings) and its slot isn't an argument, array element, ternary
+    branch or right-hand side. This also fixes raw-code literals such as `time - 1`.
+31. **Inlining is opt-in** (`settings.inlineSingleUse`, default off). This keeps the golden output and named variables,
+    which suit hand tweaking. When on, it folds single-use nodes that have no statements, locals or hoisting. Control
+    refs (named globals read better) and nodes marked `noInline` (`wiggle`, `loopWiggle`, which depend on random-seed
+    order) are never folded. A folded node's source-map range is its consumer's. A fuzz test checks, with the mock
+    runtime, that inlining never changes the result.
+32. **Mock AE runtime** (`tests/runtime/mockAE.ts`) models the API our nodes emit, with deterministic smooth noise
+    for wiggle and noise. It checks behaviour (endpoints, seams, gating), not AE's exact numbers.
+33. **`docs/ae-verification.md` is generated** from node `verify` strings, preset `verify` strings and spec-level
+    items. A test fails when it's stale; `npm run gen:verify` regenerates it.
+34. **Text-animator nodes:** Stagger, Typewriter (100 = not yet typed; pair with an Opacity 0% animator) and Index Ramp.
+    All are limited to the Text Selector Amount context.
+35. **E2E:** Playwright runs against `vite preview` of the production build. Locally, `PW_CHROMIUM_PATH` can point at a
+    preinstalled Chromium. In CI, the e2e job installs the Playwright browser.
+36. **UI labels:** "Import/Export" became "Open/Save" (project files), with a separate "Paste expression" for
+    paste-back. Pasting an ExpressionLab expression anywhere outside a text field also offers to import it.

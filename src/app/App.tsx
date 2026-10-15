@@ -1,7 +1,9 @@
 import { ReactFlowProvider } from '@xyflow/react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Canvas } from './components/Canvas';
 import { GlobalsStrip } from './components/GlobalsStrip';
+import { GraphTabs } from './components/GraphTabs';
+import { ImportDialog } from './components/ImportDialog';
 import { Palette } from './components/Palette';
 import { RightPanel } from './components/RightPanel';
 import { TopBar } from './components/TopBar';
@@ -13,6 +15,7 @@ function isTyping(e: KeyboardEvent): boolean {
 }
 
 export function App() {
+  const [importSignal, setImportSignal] = useState(0);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const mod = e.metaKey || e.ctrlKey;
@@ -33,13 +36,17 @@ export function App() {
   return (
     <ReactFlowProvider>
       <div className="app">
-        <TopBar />
+        <TopBar onPasteImport={() => setImportSignal((n) => n + 1)} />
         <GlobalsStrip />
         <main className="panes">
           <Palette />
-          <Canvas />
+          <div className="center">
+            <GraphTabs />
+            <Canvas />
+          </div>
           <RightPanel />
         </main>
+        <ImportDialog openSignal={importSignal} />
       </div>
     </ReactFlowProvider>
   );

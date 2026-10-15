@@ -11,7 +11,8 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "gen:verify": "UPDATE_VERIFY=1 vitest run tests/docs"
+    "gen:verify": "UPDATE_VERIFY=1 vitest run tests/docs",
+    "e2e": "playwright test"
   },
   "dependencies": {
     "@codemirror/lang-javascript": "^6.2.5",
@@ -28,6 +29,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.64.1",
     "@types/node": "^26.6.5",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",

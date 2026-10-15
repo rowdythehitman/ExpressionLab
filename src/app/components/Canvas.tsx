@@ -4,12 +4,13 @@ import {
   applyNodeChanges, Background, Controls, MiniMap, ReactFlow, useReactFlow,
   type Connection, type Edge as RFEdge, type EdgeChange, type Node as RFNode, type NodeChange,
 } from '@xyflow/react';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { checkConnection, type NodeTypes } from '../../core';
 import { actions, useStore } from '../store';
 import { useCompiled } from '../useCompiled';
 import { AeNode, type AeNodeData } from './AeNode';
 import { DRAG_MIME } from './Palette';
+import { QuickAdd, type QuickAddAt } from './QuickAdd';
 
 const nodeTypes = { ae: AeNode };
 
@@ -19,6 +20,29 @@ export function Canvas() {
   const selectedNodeId = useStore((s) => s.selectedNodeId);
   const connectError = useStore((s) => s.connectError);
   const rf = useReactFlow();
+  const wrapper = useRef<HTMLDivElement>(null);
+  const mouse = useRef<{ x: number; y: number } | null>(null);
+  const [quickAdd, setQuickAdd] = useState<QuickAddAt | null>(null);
+
+  const openQuickAdd = useCallback((clientX: number, clientY: number) => {
+    const r = wrapper.current!.getBoundingClientRect();
+    setQuickAdd({ x: clientX - r.left, y: clientY - r.top, flow: rf.screenToFlowPosition({ x: clientX, y: clientY }) });
+  }, [rf]);
+
+  // Tab opens quick-add at the cursor (or the canvas centre) when focus isn't in a field or dialog.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab' || e.ctrlKey || e.metaKey || e.altKey) return;
+      const el = e.target as HTMLElement;
+      if (['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON', 'A', 'SUMMARY'].includes(el.tagName) || el.closest('[role=dialog]')) return;
+      e.preventDefault();
+      const r = wrapper.current!.getBoundingClientRect();
+      const m = mouse.current;
+      openQuickAdd(m?.x ?? r.left + r.width / 2, m?.y ?? r.top + r.height / 2);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [openQuickAdd]);
 
   // Per-node status from diagnostics: errors outline the node, unused nodes are dimmed.
   const status = useMemo(() => {
@@ -115,7 +139,17 @@ export function Canvas() {
   }, [rf]);
 
   return (
-    <div className="canvas" onDragOver={(e) => e.preventDefault()} onDrop={onDrop}>
+    <div
+      className="canvas"
+      ref={wrapper}
+      onDragOver={(e) => e.preventDefault()}
+      onDrop={onDrop}
+      onMouseMove={(e) => { mouse.current = { x: e.clientX, y: e.clientY }; }}
+      onMouseLeave={() => { mouse.current = null; }}
+      onDoubleClick={(e) => {
+        if ((e.target as HTMLElement).classList.contains('react-flow__pane')) openQuickAdd(e.clientX, e.clientY);
+      }}
+    >
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -125,6 +159,7 @@ export function Canvas() {
         onConnect={onConnect}
         onPaneClick={() => useStore.getState().select(null)}
         deleteKeyCode={['Backspace', 'Delete']}
+        zoomOnDoubleClick={false}
         colorMode="dark"
         fitView
         fitViewOptions={{ padding: 0.2 }}
@@ -144,8 +179,9 @@ export function Canvas() {
           <button className="ghost small" aria-label="Dismiss" onClick={() => useStore.getState().setConnectError(null)}>×</button>
         </div>
       )}
+      {quickAdd && <QuickAdd at={quickAdd} onClose={() => setQuickAdd(null)} />}
       {project.graphs.length > 0 && graph.nodes.length === 0 && (
-        <div className="canvas-empty muted">Add nodes from the palette, then wire them into an Output.</div>
+        <div className="canvas-empty muted">Add nodes from the palette (or press Tab / double-click here), then wire them into an Output.</div>
       )}
     </div>
   );
