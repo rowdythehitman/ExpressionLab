@@ -1,0 +1,26 @@
+[
+  {
+    "id": "ctx.value", "label": "Value", "category": "context",
+    "description": "The current value of the property the expression is applied to.",
+    "tags": ["value", "self", "property"],
+    "inputs": [],
+    "outputs": [{ "id": "out", "label": "Value", "type": "V", "expr": "value" }],
+    "verify": "Applied alone, the property is unchanged."
+  },
+  {
+    "id": "ctx.time", "label": "Time", "category": "context",
+    "description": "Current composition time in seconds.",
+    "tags": ["time", "seconds", "clock"],
+    "inputs": [],
+    "outputs": [{ "id": "out", "label": "Seconds", "type": "number", "expr": "time" }],
+    "verify": "On Rotation, the layer turns one degree per second."
+  },
+  {
+    "id": "ctx.index", "label": "Layer Index", "category": "context",
+    "description": "This layer's 1-based index in the composition.",
+    "tags": ["index", "layer", "number"],
+    "inputs": [],
+    "outputs": [{ "id": "out", "label": "Index", "type": "number", "expr": "index" }],
+    "verify": "On Rotation, the value equals the layer number in the timeline."
+  }
+]

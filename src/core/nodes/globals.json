@@ -1,0 +1,10 @@
+[
+  {
+    "id": "ref.control", "label": "Control", "category": "globals", "special": "ref.control",
+    "description": "Reads an expression control (slider, checkbox, dropdown...) defined in Globals.",
+    "tags": ["control", "slider", "checkbox", "dropdown", "effect", "ctrls"],
+    "inputs": [],
+    "outputs": [{ "id": "out", "label": "Value", "type": "T", "expr": "" }],
+    "verify": "Changing the control in AE changes the result."
+  }
+]

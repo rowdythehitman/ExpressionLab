@@ -1,0 +1,20 @@
+[
+  { "id": "position2D", "label": "Position (2D)", "valueType": "vec2", "contexts": ["transform"], "applyTo": "Position" },
+  { "id": "position3D", "label": "Position (3D)", "valueType": "vec3", "contexts": ["transform"], "applyTo": "Position" },
+  { "id": "scale2D", "label": "Scale (2D)", "valueType": "vec2", "contexts": ["transform"], "applyTo": "Scale" },
+  { "id": "scale3D", "label": "Scale (3D)", "valueType": "vec3", "contexts": ["transform"], "applyTo": "Scale" },
+  { "id": "anchorPoint2D", "label": "Anchor Point (2D)", "valueType": "vec2", "contexts": ["transform"], "applyTo": "Anchor Point" },
+  { "id": "anchorPoint3D", "label": "Anchor Point (3D)", "valueType": "vec3", "contexts": ["transform"], "applyTo": "Anchor Point" },
+  { "id": "rotation", "label": "Rotation", "valueType": "number", "contexts": ["transform"], "applyTo": "Rotation" },
+  { "id": "opacity", "label": "Opacity", "valueType": "number", "contexts": ["transform"], "applyTo": "Opacity" },
+  { "id": "sourceText", "label": "Source Text", "valueType": "string", "contexts": ["text"], "applyTo": "Text > Source Text" },
+  { "id": "textSelectorAmount", "label": "Text Selector Amount", "valueType": "number", "contexts": ["text", "textSelectorAmount"], "applyTo": "Text Animator > Expression Selector > Amount" },
+  { "id": "textAnimatorProperty", "label": "Text Animator Property", "valueType": null, "allowedValueTypes": ["number", "vec2", "color"], "contexts": ["text"], "applyTo": "a Text Animator property" },
+  { "id": "effectNumber", "label": "Effect (number)", "valueType": "number", "contexts": ["effect"], "applyTo": "an effect slider/angle parameter" },
+  { "id": "effectColor", "label": "Effect (colour)", "valueType": "color", "contexts": ["effect"], "applyTo": "an effect colour parameter" },
+  { "id": "shapePath", "label": "Shape Path", "valueType": "path", "contexts": ["shape"], "applyTo": "Contents > Shape > Path" },
+  { "id": "maskPath", "label": "Mask Path", "valueType": "path", "contexts": ["mask"], "applyTo": "Masks > Mask Path" },
+  { "id": "shapeStrokeWidth", "label": "Shape Stroke Width", "valueType": "number", "contexts": ["shape", "shapeStrokeWidth"], "applyTo": "Contents > Stroke > Stroke Width" },
+  { "id": "shapeFillColor", "label": "Shape Fill Colour", "valueType": "color", "contexts": ["shape"], "applyTo": "Contents > Fill > Color" },
+  { "id": "custom", "label": "Custom", "valueType": null, "allowedValueTypes": ["number", "vec2", "vec3", "color", "string", "boolean", "path"], "contexts": [], "applyTo": "the chosen property" }
+]

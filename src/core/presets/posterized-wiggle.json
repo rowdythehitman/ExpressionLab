@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "globals": {
+    "ctrls": { "layerName": "CTRLS" },
+    "layers": [],
+    "controls": [
+      { "id": "c-fps", "effectName": "Stop Motion FPS", "type": "slider", "host": "ctrls" },
+      { "id": "c-freq", "effectName": "Wiggle Freq", "type": "slider", "host": "ctrls" },
+      { "id": "c-amp", "effectName": "Wiggle Amp", "type": "slider", "host": "ctrls" }
+    ],
+    "comps": []
+  },
+  "graphs": [
+    {
+      "id": "g1",
+      "name": "Posterize Time + Wiggle",
+      "target": { "id": "position2D" },
+      "nodes": [
+        { "id": "fps", "type": "ref.control", "position": { "x": 0, "y": -150 }, "inputs": {}, "params": {}, "ref": { "controlId": "c-fps" } },
+        { "id": "posterize", "type": "anim.posterize", "position": { "x": 250, "y": -150 }, "inputs": {}, "params": {} },
+        { "id": "freq", "type": "ref.control", "position": { "x": 0, "y": 0 }, "inputs": {}, "params": {}, "ref": { "controlId": "c-freq" } },
+        { "id": "amp", "type": "ref.control", "position": { "x": 0, "y": 100 }, "inputs": {}, "params": {}, "ref": { "controlId": "c-amp" } },
+        { "id": "wiggle", "type": "anim.wiggle", "position": { "x": 250, "y": 0 }, "inputs": {}, "params": {} },
+        { "id": "out", "type": "output", "position": { "x": 500, "y": 0 }, "inputs": {}, "params": {} }
+      ],
+      "edges": [
+        { "id": "e1", "from": { "node": "fps", "port": "out" }, "to": { "node": "posterize", "port": "fps" } },
+        { "id": "e2", "from": { "node": "freq", "port": "out" }, "to": { "node": "wiggle", "port": "freq" } },
+        { "id": "e3", "from": { "node": "amp", "port": "out" }, "to": { "node": "wiggle", "port": "amp" } },
+        { "id": "e4", "from": { "node": "wiggle", "port": "out" }, "to": { "node": "out", "port": "in" } }
+      ]
+    }
+  ],
+  "settings": { "aeTarget": 26, "useMatchNames": false, "comments": "minimal", "embedGraph": false }
+}
