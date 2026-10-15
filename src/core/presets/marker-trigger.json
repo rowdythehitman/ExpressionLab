@@ -1,0 +1,87 @@
+{
+  "version": 1,
+  "globals": {
+    "ctrls": {
+      "layerName": "CTRLS"
+    },
+    "layers": [],
+    "controls": [],
+    "comps": []
+  },
+  "graphs": [
+    {
+      "id": "marker-trigger",
+      "name": "Trigger Expression on Marker",
+      "target": {
+        "id": "opacity"
+      },
+      "nodes": [
+        {
+          "id": "marker",
+          "type": "marker.sinceLast",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "inputs": {},
+          "params": {}
+        },
+        {
+          "id": "fade",
+          "type": "math.remap",
+          "position": {
+            "x": 250,
+            "y": 0
+          },
+          "inputs": {
+            "inMax": 0.5
+          },
+          "params": {
+            "mode": "ease"
+          },
+          "name": "Fade In"
+        },
+        {
+          "id": "out",
+          "type": "output",
+          "position": {
+            "x": 500,
+            "y": 0
+          },
+          "inputs": {},
+          "params": {}
+        }
+      ],
+      "edges": [
+        {
+          "id": "marker.since-fade.t",
+          "from": {
+            "node": "marker",
+            "port": "since"
+          },
+          "to": {
+            "node": "fade",
+            "port": "t"
+          }
+        },
+        {
+          "id": "fade.out-out.in",
+          "from": {
+            "node": "fade",
+            "port": "out"
+          },
+          "to": {
+            "node": "out",
+            "port": "in"
+          }
+        }
+      ]
+    }
+  ],
+  "settings": {
+    "aeTarget": 26,
+    "useMatchNames": false,
+    "comments": "minimal",
+    "embedGraph": true
+  }
+}

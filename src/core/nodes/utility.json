@@ -1,0 +1,9 @@
+[
+  {
+    "id": "output", "label": "Output", "category": "output", "special": "output",
+    "description": "The expression's result. Exactly one per graph; its type is the target's type.",
+    "tags": ["output", "result", "return"],
+    "inputs": [{ "id": "in", "label": "Result", "type": "V" }],
+    "outputs": []
+  }
+]

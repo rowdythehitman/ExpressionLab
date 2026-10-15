@@ -1,0 +1,5 @@
+// ExpressionLab · Custom
+// And
+const and = (true && true);
+
+and

@@ -1,0 +1,5 @@
+// ExpressionLab · Custom
+// Not
+const not = !false;
+
+not

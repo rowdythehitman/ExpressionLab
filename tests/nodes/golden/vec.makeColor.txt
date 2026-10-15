@@ -1,0 +1,5 @@
+// ExpressionLab · Shape Fill Colour
+// Make Colour
+const makeColour = [1, 1, 1, 1];
+
+makeColour

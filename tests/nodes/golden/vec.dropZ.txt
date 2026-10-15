@@ -1,0 +1,5 @@
+// ExpressionLab · Position (2D)
+// Drop Z
+const dropZ = [[0, 0, 0][0], [0, 0, 0][1]];
+
+dropZ

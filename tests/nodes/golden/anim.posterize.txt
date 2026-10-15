@@ -1,0 +1,4 @@
+// ExpressionLab · Rotation
+posterizeTime(12);
+
+value

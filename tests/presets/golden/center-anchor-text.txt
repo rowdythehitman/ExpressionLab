@@ -1,0 +1,12 @@
+// ExpressionLab · Anchor Point (2D)
+// Text Box
+const textBox_r = thisLayer.sourceRectAtTime(time, false);
+const textBoxCenter = [textBox_r.left + textBox_r.width / 2, textBox_r.top + textBox_r.height / 2];
+// Center
+const centerY = textBoxCenter[1];
+// Anchor
+const anchorX = value[0];
+// Centered Anchor
+const centeredAnchor = [anchorX, centerY];
+
+centeredAnchor

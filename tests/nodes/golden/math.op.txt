@@ -1,0 +1,5 @@
+// ExpressionLab · Rotation
+// Math
+const math = 0 + 0;
+
+math

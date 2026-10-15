@@ -1,0 +1,5 @@
+// ExpressionLab · Rotation
+// Value at Time
+const valueAtTime1 = thisLayer.transform.opacity.valueAtTime(time);
+
+valueAtTime1

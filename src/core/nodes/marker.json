@@ -1,0 +1,21 @@
+[
+  {
+    "id": "marker.sinceLast", "label": "Time Since Marker", "category": "marker",
+    "description": "Seconds since the most recent marker on this layer. Use to trigger animations.",
+    "tags": ["marker", "trigger", "timing"],
+    "inputs": [],
+    "locals": ["n"],
+    "statements": [
+      "let {{local.n}} = 0;",
+      "if (marker.numKeys > 0) {",
+      "  {{local.n}} = marker.nearestKey(time).index;",
+      "  if (marker.key({{local.n}}).time > time) { {{local.n}}--; }",
+      "}"
+    ],
+    "outputs": [
+      { "id": "since", "label": "Seconds", "type": "number", "expr": "({{local.n}} > 0 ? time - marker.key({{local.n}}).time : 0)" },
+      { "id": "active", "label": "Passed any", "type": "boolean", "expr": "({{local.n}} > 0)" }
+    ],
+    "verify": "Before the first marker 'since' is 0 and 'active' is false."
+  }
+]

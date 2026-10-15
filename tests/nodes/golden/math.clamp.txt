@@ -1,0 +1,5 @@
+// ExpressionLab · Rotation
+// Clamp
+const clamp1 = clamp(0, 0, 100);
+
+clamp1

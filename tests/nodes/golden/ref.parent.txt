@@ -1,0 +1,5 @@
+// ExpressionLab · Rotation
+// Layer Name Number
+const layerNameNumber = parseInt(parent.name, 10);
+
+layerNameNumber

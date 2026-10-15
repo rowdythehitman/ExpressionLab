@@ -1,0 +1,6 @@
+// ExpressionLab · Rotation
+// Source Rect
+const sourceRect_r = thisLayer.sourceRectAtTime(time, false);
+const sourceRectWidth = sourceRect_r.width;
+
+sourceRectWidth

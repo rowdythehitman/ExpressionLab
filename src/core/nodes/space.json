@@ -1,0 +1,27 @@
+[
+  { "id": "space.toComp", "label": "To Comp", "category": "space", "description": "Converts a point from a layer's space to comp space.", "tags": ["toComp", "space", "convert", "position", "null"], "generics": { "T": ["vec2", "vec3"] }, "inputs": [{ "id": "layer", "label": "Layer", "type": "layer", "default": "thisLayer" }, { "id": "p", "label": "Point", "type": "T", "default": [0, 0] }], "outputs": [{ "id": "out", "label": "Point", "type": "T", "expr": "{{in.layer}}.toComp({{in.p}})" }], "verify": "A child layer's anchor [0, 0] maps to its comp position." },
+  { "id": "space.fromComp", "label": "From Comp", "category": "space", "description": "Converts a point from comp space to a layer's space.", "tags": ["fromComp", "space", "convert"], "generics": { "T": ["vec2", "vec3"] }, "inputs": [{ "id": "layer", "label": "Layer", "type": "layer", "default": "thisLayer" }, { "id": "p", "label": "Point", "type": "T", "default": [0, 0] }], "outputs": [{ "id": "out", "label": "Point", "type": "T", "expr": "{{in.layer}}.fromComp({{in.p}})" }], "verify": "fromComp(toComp(p)) returns p." },
+  { "id": "space.toWorld", "label": "To World", "category": "space", "description": "Converts a point from a layer's space to world (3D) space.", "tags": ["toWorld", "space", "3d", "convert"], "generics": { "T": ["vec2", "vec3"] }, "inputs": [{ "id": "layer", "label": "Layer", "type": "layer", "default": "thisLayer" }, { "id": "p", "label": "Point", "type": "T", "default": [0, 0, 0] }], "outputs": [{ "id": "out", "label": "Point", "type": "T", "expr": "{{in.layer}}.toWorld({{in.p}})" }], "verify": "A 3D null's [0, 0, 0] maps to its world position." },
+  { "id": "space.fromWorld", "label": "From World", "category": "space", "description": "Converts a point from world space to a layer's space.", "tags": ["fromWorld", "space", "3d", "convert"], "generics": { "T": ["vec2", "vec3"] }, "inputs": [{ "id": "layer", "label": "Layer", "type": "layer", "default": "thisLayer" }, { "id": "p", "label": "Point", "type": "T", "default": [0, 0, 0] }], "outputs": [{ "id": "out", "label": "Point", "type": "T", "expr": "{{in.layer}}.fromWorld({{in.p}})" }], "verify": "fromWorld(toWorld(p)) returns p." },
+  {
+    "id": "layer.sourceRect", "label": "Source Rect", "category": "space",
+    "description": "The layer's bounding box (sourceRectAtTime): width, height, top, left and centre.",
+    "tags": ["sourceRectAtTime", "bounds", "box", "text", "size", "width", "height", "center"],
+    "inputs": [
+      { "id": "layer", "label": "Layer", "type": "layer", "default": "thisLayer" },
+      { "id": "t", "label": "Time", "type": "number", "default": "time" }
+    ],
+    "params": [{ "id": "includeExtents", "label": "Include extents", "kind": "checkbox", "default": false }],
+    "locals": ["r"],
+    "statements": ["const {{local.r}} = {{in.layer}}.sourceRectAtTime({{in.t}}, {{param.includeExtents}});"],
+    "outputs": [
+      { "id": "width", "label": "Width", "type": "number", "expr": "{{local.r}}.width" },
+      { "id": "height", "label": "Height", "type": "number", "expr": "{{local.r}}.height" },
+      { "id": "top", "label": "Top", "type": "number", "expr": "{{local.r}}.top" },
+      { "id": "left", "label": "Left", "type": "number", "expr": "{{local.r}}.left" },
+      { "id": "center", "label": "Center", "type": "vec2", "expr": "[{{local.r}}.left + {{local.r}}.width / 2, {{local.r}}.top + {{local.r}}.height / 2]" }
+    ],
+    "verify": "On a text layer's Anchor Point, Center keeps the anchor centred as the text changes."
+  },
+  { "id": "layer.nameNumber", "label": "Layer Name Number", "category": "space", "description": "The number at the start of a layer's name (\"12 Title\" → 12). Handles more than one digit, unlike name[0].", "tags": ["name", "number", "dropdown", "index", "parseInt"], "inputs": [{ "id": "layer", "label": "Layer", "type": "layer", "default": "thisLayer" }], "outputs": [{ "id": "out", "label": "Number", "type": "number", "expr": "parseInt({{in.layer}}.name, 10)" }], "verify": "A layer named \"12 Title\" gives 12." }
+]

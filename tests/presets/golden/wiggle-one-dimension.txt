@@ -1,0 +1,11 @@
+// ExpressionLab · Position (2D)
+// Wiggle
+const wiggle1 = wiggle(2, 50, 1, 0.5);
+// Wiggled
+const wiggledX = wiggle1[0];
+// Base
+const baseY = value[1];
+// New Position
+const newPosition = [wiggledX, baseY];
+
+newPosition

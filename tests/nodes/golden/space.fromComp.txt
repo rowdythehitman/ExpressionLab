@@ -1,0 +1,5 @@
+// ExpressionLab · Position (2D)
+// From Comp
+const fromComp1 = thisLayer.fromComp([0, 0]);
+
+fromComp1

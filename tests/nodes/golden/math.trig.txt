@@ -1,0 +1,5 @@
+// ExpressionLab · Rotation
+// Trig
+const trig = Math.sin(degreesToRadians(0));
+
+trig

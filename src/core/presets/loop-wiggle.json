@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "globals": {
+    "ctrls": {
+      "layerName": "CTRLS"
+    },
+    "layers": [],
+    "controls": [],
+    "comps": []
+  },
+  "graphs": [
+    {
+      "id": "loop-wiggle",
+      "name": "Loop a Wiggle",
+      "target": {
+        "id": "position2D"
+      },
+      "nodes": [
+        {
+          "id": "lw",
+          "type": "anim.loopWiggle",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "inputs": {},
+          "params": {}
+        },
+        {
+          "id": "out",
+          "type": "output",
+          "position": {
+            "x": 300,
+            "y": 0
+          },
+          "inputs": {},
+          "params": {}
+        }
+      ],
+      "edges": [
+        {
+          "id": "lw.out-out.in",
+          "from": {
+            "node": "lw",
+            "port": "out"
+          },
+          "to": {
+            "node": "out",
+            "port": "in"
+          }
+        }
+      ]
+    }
+  ],
+  "settings": {
+    "aeTarget": 26,
+    "useMatchNames": false,
+    "comments": "minimal",
+    "embedGraph": true
+  }
+}

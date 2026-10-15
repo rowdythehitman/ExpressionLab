@@ -1,0 +1,5 @@
+// ExpressionLab · Rotation
+// Select
+const select = (true ? 0 : 0);
+
+select

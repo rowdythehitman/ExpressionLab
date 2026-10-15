@@ -1,0 +1,5 @@
+// ExpressionLab · Position (3D)
+// Make Vec3
+const makeVec3 = [0, 0, 0];
+
+makeVec3

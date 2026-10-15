@@ -1,0 +1,5 @@
+// ExpressionLab · Position (2D)
+// Make Vec2
+const makeVec2 = [0, 0];
+
+makeVec2

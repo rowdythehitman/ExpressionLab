@@ -1,0 +1,5 @@
+// ExpressionLab · Rotation
+// Delay by Index
+const delayByIndex = 2 * thisComp.frameDuration * (index - 1);
+
+delayByIndex

@@ -1,0 +1,7 @@
+// ExpressionLab · Rotation
+const titleLayer = thisComp.layer("Title");
+
+// Layer Name Number
+const layerNameNumber = parseInt(titleLayer.name, 10);
+
+layerNameNumber

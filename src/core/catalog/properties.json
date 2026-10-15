@@ -1,0 +1,8 @@
+[
+  { "path": "transform.anchorPoint", "label": "Anchor Point", "type": "vec2", "type3D": "vec3", "matchName": "ADBE Anchor Point" },
+  { "path": "transform.position", "label": "Position", "type": "vec2", "type3D": "vec3", "matchName": "ADBE Position" },
+  { "path": "transform.scale", "label": "Scale", "type": "vec2", "type3D": "vec3", "matchName": "ADBE Scale" },
+  { "path": "transform.rotation", "label": "Rotation", "type": "number", "matchName": "ADBE Rotate Z" },
+  { "path": "transform.opacity", "label": "Opacity", "type": "number", "matchName": "ADBE Opacity" },
+  { "path": "text.sourceText", "label": "Source Text", "type": "string", "matchName": "ADBE Text Document" }
+]

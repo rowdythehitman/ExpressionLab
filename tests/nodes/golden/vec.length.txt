@@ -1,0 +1,5 @@
+// ExpressionLab · Rotation
+// Length
+const length1 = length([0, 0]);
+
+length1

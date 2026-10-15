@@ -1,0 +1,5 @@
+// ExpressionLab · Rotation
+// Noise
+const noise1 = noise(time);
+
+noise1

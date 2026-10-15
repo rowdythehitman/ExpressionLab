@@ -1,0 +1,113 @@
+{
+  "version": 1,
+  "globals": {
+    "ctrls": {
+      "layerName": "CTRLS"
+    },
+    "layers": [],
+    "controls": [
+      {
+        "id": "c-enable",
+        "effectName": "Enable",
+        "type": "checkbox",
+        "host": "ctrls"
+      }
+    ],
+    "comps": []
+  },
+  "graphs": [
+    {
+      "id": "checkbox-control",
+      "name": "Control Property with Checkbox",
+      "target": {
+        "id": "opacity"
+      },
+      "nodes": [
+        {
+          "id": "value",
+          "type": "ctx.value",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "inputs": {},
+          "params": {}
+        },
+        {
+          "id": "enable",
+          "type": "ref.control",
+          "position": {
+            "x": 0,
+            "y": 120
+          },
+          "inputs": {},
+          "params": {},
+          "ref": {
+            "controlId": "c-enable"
+          }
+        },
+        {
+          "id": "gate",
+          "type": "logic.checkboxGate",
+          "position": {
+            "x": 250,
+            "y": 40
+          },
+          "inputs": {},
+          "params": {}
+        },
+        {
+          "id": "out",
+          "type": "output",
+          "position": {
+            "x": 500,
+            "y": 40
+          },
+          "inputs": {},
+          "params": {}
+        }
+      ],
+      "edges": [
+        {
+          "id": "value.out-gate.v",
+          "from": {
+            "node": "value",
+            "port": "out"
+          },
+          "to": {
+            "node": "gate",
+            "port": "v"
+          }
+        },
+        {
+          "id": "enable.out-gate.checkbox",
+          "from": {
+            "node": "enable",
+            "port": "out"
+          },
+          "to": {
+            "node": "gate",
+            "port": "checkbox"
+          }
+        },
+        {
+          "id": "gate.out-out.in",
+          "from": {
+            "node": "gate",
+            "port": "out"
+          },
+          "to": {
+            "node": "out",
+            "port": "in"
+          }
+        }
+      ]
+    }
+  ],
+  "settings": {
+    "aeTarget": 26,
+    "useMatchNames": false,
+    "comments": "minimal",
+    "embedGraph": true
+  }
+}
