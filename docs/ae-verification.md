@@ -11,6 +11,11 @@ Use the JavaScript expression engine. Tick each item once it behaves as describe
 - [ ] `toComp` / `fromComp` / `toWorld` / `fromWorld` return a point with the same number of dimensions as their input (decisions #26).
 - [ ] Pasting an expression that ends with `//@ae-nodes:v1:...` into AE works unchanged (the payload is just a comment).
 - [ ] The setup script (Globals › AE setup script) run on a comp creates the GLOBALS null, missing null layers and every control (with dropdown items and preview values), skips ones that already exist, and undoes in one step.
+- [ ] AE panel: Window › Extensions › ExpressionLab opens the panel (AE 2022+); the canvas, code view and Output Preview work, and "Copy" puts the expression on the clipboard.
+- [ ] AE panel: "Apply to selected" sets the expression on every selected property (Position, an effect slider, Source Text, a shape path) in one undo step, and AE's expression errors are shown in the panel.
+- [ ] AE panel: "Use selected property" picks Position (2D) on a 2D layer, Position (3D) on a 3D layer, Source Text, an Expression Selector Amount (`ADBE Text Expressible Amount`), and Effect (number) for a slider.
+- [ ] AE panel: "Load from selected" opens the graph embedded in the selected property's expression; "File › Create globals in comp" runs the setup script; "Save project" shows a save dialog and writes the file.
+- [ ] AE panel: the embedded graph round-trips on CEP 11/12 (older Chromium: the panel falls back to Node's zlib) — copy from the panel, paste into the web app, and back.
 - [ ] Dropdown controls compare with numbers as expected (`menu == 2`) and `.text` (Dropdown Text node) reads the item label in AE 26.
 - [ ] Match name `ADBE Slider Control-0001` reads a Slider Control (Settings → Use match names), and the display name `Slider` does too.
 - [ ] Match name `ADBE Checkbox Control-0001` reads a Checkbox Control (Settings → Use match names), and the display name `Checkbox` does too.

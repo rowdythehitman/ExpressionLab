@@ -2,9 +2,11 @@
 import { useReactFlow } from '@xyflow/react';
 import { useCallback, useEffect, useState } from 'react';
 import { embedGraph, PAYLOAD_WARN_BYTES, type Diagnostic, type EmbedResult } from '../../core';
+import { copyText } from '../host';
 import { downloadSetupScript } from '../persist';
 import { useStore } from '../store';
 import { useCompiled } from '../useCompiled';
+import { AeBar } from './AeBar';
 import { CodeView } from './CodeView';
 import { Inspector } from './Inspector';
 import { Preview } from './Preview';
@@ -42,13 +44,17 @@ export function RightPanel() {
       }]
     : result.diagnostics;
 
+  const fullCode = useCallback(
+    async () => (embedOn ? (await embedGraph(project, graph, result.code)).code : result.code),
+    [embedOn, project, graph, result.code],
+  );
+
   const copy = useCallback(async (clean: boolean) => {
     if (!canCopy) return;
-    const text = !clean && embedOn ? (await embedGraph(project, graph, result.code)).code : result.code;
-    await navigator.clipboard.writeText(text);
+    await copyText(clean ? result.code : await fullCode());
     setCopied(clean ? 'clean' : 'full');
     setTimeout(() => setCopied(null), 1200);
-  }, [canCopy, embedOn, project, graph, result.code]);
+  }, [canCopy, fullCode, result.code]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -96,6 +102,7 @@ export function RightPanel() {
             </button>
           </div>
         </div>
+        <AeBar canApply={canCopy} getCode={fullCode} />
         {view === 'preview' ? (
           <Preview />
         ) : canCopy ? (

@@ -1,5 +1,6 @@
+import { deflateRawSync, inflateRawSync } from 'node:zlib';
 import { describe, expect, it } from 'vitest';
-import { compile, decodePayload, embedGraph, hasPayload, importGraph, PAYLOAD_PREFIX } from '../../src/core';
+import { compile, decodePayload, embedGraph, hasPayload, importGraph, PAYLOAD_PREFIX, setRawDeflate } from '../../src/core';
 import { PRESETS } from '../../src/core/presets';
 import { assertParses, goldenProject } from '../helpers';
 
@@ -62,5 +63,18 @@ describe('embedded graph payload (spec §8)', () => {
     expect(project.graphs[1]!.name).toBe('Posterize Time + Wiggle (imported)');
     expect(project.globals.controls.map((c) => c.effectName)).toEqual(['Renamed In Project', 'Wiggle Freq', 'Wiggle Amp']);
     expect(compile(project, graphId).diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
+  });
+
+  it('the AE panel\'s zlib codec reads and writes the same payloads as the browser streams', async () => {
+    const browser = await embedded(2);
+    setRawDeflate({ deflate: async (b) => new Uint8Array(deflateRawSync(b)), inflate: async (b) => new Uint8Array(inflateRawSync(b)) });
+    try {
+      expect((await decodePayload(browser.code))!.graph).toEqual(browser.graph);
+      const panel = await embedded(2);
+      setRawDeflate();
+      expect((await decodePayload(panel.code))!.graph).toEqual(panel.graph);
+    } finally {
+      setRawDeflate();
+    }
   });
 });

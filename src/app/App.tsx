@@ -1,5 +1,5 @@
 import { ReactFlowProvider } from '@xyflow/react';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Canvas } from './components/Canvas';
 import { GlobalsStrip } from './components/GlobalsStrip';
 import { GraphTabs } from './components/GraphTabs';
@@ -16,7 +16,6 @@ function isTyping(e: KeyboardEvent): boolean {
 }
 
 export function App() {
-  const [importSignal, setImportSignal] = useState(0);
   const customDialog = useStore((s) => s.customDialog);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -38,7 +37,7 @@ export function App() {
   return (
     <ReactFlowProvider>
       <div className="app">
-        <TopBar onPasteImport={() => setImportSignal((n) => n + 1)} />
+        <TopBar />
         <GlobalsStrip />
         <main className="panes">
           <Palette />
@@ -48,7 +47,7 @@ export function App() {
           </div>
           <RightPanel />
         </main>
-        <ImportDialog openSignal={importSignal} />
+        <ImportDialog />
         {customDialog && (
           <CustomNodesDialog focusId={customDialog.focusId} onClose={() => useStore.setState({ customDialog: null })} />
         )}

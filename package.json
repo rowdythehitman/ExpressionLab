@@ -1,7 +1,7 @@
 {
   "name": "expressionlab",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -12,7 +12,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "gen:verify": "UPDATE_VERIFY=1 vitest run tests/docs",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "build:panel": "tsc -b && vite build --mode panel",
+    "package:zxp": "node scripts/package-zxp.mjs"
   },
   "dependencies": {
     "@codemirror/lang-javascript": "^6.2.5",

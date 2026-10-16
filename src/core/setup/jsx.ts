@@ -5,7 +5,7 @@ import { APP_NAME } from '../compiler/compile';
 import type { ControlGlobal, Project } from '../types';
 
 /** A JS string literal that is also valid ES3 (escapes U+2028/2029, which ES3 treats as line breaks). */
-function str(s: string): string {
+export function jsxString(s: string): string {
   return JSON.stringify(s).replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
 }
 
@@ -24,10 +24,10 @@ export function generateSetupScript(project: Project): string {
     '(function () {',
     '  var comp = app.project.activeItem;',
     '  if (!(comp && comp instanceof CompItem)) {',
-    `    alert(${str(`${APP_NAME}: open (or select) a composition first, then run this script again.`)});`,
+    `    alert(${jsxString(`${APP_NAME}: open (or select) a composition first, then run this script again.`)});`,
     '    return;',
     '  }',
-    `  app.beginUndoGroup(${str(`${APP_NAME} setup`)});`,
+    `  app.beginUndoGroup(${jsxString(`${APP_NAME} setup`)});`,
     '  var made = [];',
     '  var skipped = [];',
     '  function findLayer(name) {',
@@ -60,7 +60,7 @@ export function generateSetupScript(project: Project): string {
     '    made.push(name + " on " + layer.name);',
     '  }',
     '',
-    `  var globalsLayer = ensureNull(${str(globals.ctrls.layerName)}, false);`,
+    `  var globalsLayer = ensureNull(${jsxString(globals.ctrls.layerName)}, false);`,
   ];
 
   // Layers: create missing nulls; other kinds must already exist (we can't guess their content).
@@ -69,11 +69,11 @@ export function generateSetupScript(project: Project): string {
     const v = `layer${i + 1}`;
     layerVar.set(l.id, v);
     if (l.kind === 'null') {
-      lines.push(`  var ${v} = ensureNull(${str(l.layerName)}, ${l.is3D});`);
+      lines.push(`  var ${v} = ensureNull(${jsxString(l.layerName)}, ${l.is3D});`);
     } else {
       lines.push(
-        `  var ${v} = findLayer(${str(l.layerName)});`,
-        `  if (!${v}) { skipped.push(${str(`Layer "${l.layerName}" (${l.kind}) isn't in this comp; add it and run again`)}); }`,
+        `  var ${v} = findLayer(${jsxString(l.layerName)});`,
+        `  if (!${v}) { skipped.push(${jsxString(`Layer "${l.layerName}" (${l.kind}) isn't in this comp; add it and run again`)}); }`,
       );
     }
   });
@@ -88,8 +88,8 @@ export function generateSetupScript(project: Project): string {
 
   for (const c of globals.controls) {
     const info = CONTROLS[c.type];
-    const items = c.type === 'dropdown' && c.dropdownItems?.length ? `[${c.dropdownItems.map(str).join(', ')}]` : 'null';
-    const args = `${str(c.effectName)}, ${str(info.effectMatchName)}, ${value(c)}, ${items}`;
+    const items = c.type === 'dropdown' && c.dropdownItems?.length ? `[${c.dropdownItems.map(jsxString).join(', ')}]` : 'null';
+    const args = `${jsxString(c.effectName)}, ${jsxString(info.effectMatchName)}, ${value(c)}, ${items}`;
     if (c.host === 'ctrls') lines.push(`  ensureControl(globalsLayer, ${args});`);
     else if (c.host === 'thisLayer') lines.push(`  for (var t = 0; t < targets.length; t++) { ensureControl(targets[t], ${args}); }`);
     else {
@@ -101,7 +101,7 @@ export function generateSetupScript(project: Project): string {
   lines.push(
     '',
     '  app.endUndoGroup();',
-    `  var report = ${str(`${APP_NAME} setup`)} + "\\n\\nCreated:\\n" + (made.length ? made.join("\\n") : "nothing new");`,
+    `  var report = ${jsxString(`${APP_NAME} setup`)} + "\\n\\nCreated:\\n" + (made.length ? made.join("\\n") : "nothing new");`,
     '  if (skipped.length) { report += "\\n\\nSkipped:\\n" + skipped.join("\\n"); }',
     '  alert(report);',
     '})();',

@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
-import { APP_NAME, TARGETS, type Settings, type ValueType } from '../../core';
+import { APP_NAME, generateSetupScript, TARGETS, type Settings, type ValueType } from '../../core';
+import { getHost } from '../host';
 import { PRESETS } from '../../core/presets';
 import { downloadSetupScript, exportProject, parseProjectFile } from '../persist';
 import { actions, useGraph, useStore } from '../store';
@@ -14,7 +15,7 @@ function splitTarget(id: string) {
   return m ? { base: m[1]!, is3D: m[2] === '3D' } : { base: id, is3D: false };
 }
 
-export function TopBar({ onPasteImport }: { onPasteImport: () => void }) {
+export function TopBar() {
   const graph = useGraph();
   const project = useStore((s) => s.project);
   const canUndo = useStore((s) => s.past.length > 0);
@@ -38,6 +39,15 @@ export function TopBar({ onPasteImport }: { onPasteImport: () => void }) {
     useStore.getState().update((p) => {
       p.settings[key] = value;
     });
+
+  const host = getHost();
+  const runSetup = async () => {
+    try {
+      await host!.runScript(generateSetupScript(project));
+    } catch (e) {
+      setNotice(e instanceof Error ? e.message : String(e));
+    }
+  };
 
   const onImport = async (file: File | undefined) => {
     if (!file) return;
@@ -124,7 +134,12 @@ export function TopBar({ onPasteImport }: { onPasteImport: () => void }) {
         <div className="menu-body menu-list" onClick={() => fileMenu.current?.removeAttribute('open')}>
           <button className="ghost" onClick={() => fileRef.current?.click()} title="Open a .aenodes.json project">Open project…</button>
           <button className="ghost" onClick={() => exportProject(project)} title="Save the project as .aenodes.json">Save project</button>
-          <button className="ghost" onClick={onPasteImport} title="Paste an expression copied from ExpressionLab to edit its graph">Paste expression…</button>
+          <button className="ghost" onClick={() => actions.openImport()} title="Paste an expression copied from ExpressionLab to edit its graph">Paste expression…</button>
+          {host && (
+            <button className="ghost" onClick={() => void runSetup()} title="Creates the GLOBALS null, layers and controls in the active comp">
+              Create globals in comp
+            </button>
+          )}
           <button className="ghost" onClick={() => downloadSetupScript(project)} title="Creates the GLOBALS null, layers and controls in your comp">AE setup script (.jsx)</button>
         </div>
       </details>

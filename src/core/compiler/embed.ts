@@ -83,6 +83,26 @@ async function pipe(bytes: Uint8Array, stream: CompressionStream | Decompression
   return new Uint8Array(await new Response(out).arrayBuffer());
 }
 
+/** Raw DEFLATE (RFC 1951), the payload's compression. */
+export interface RawDeflate {
+  deflate(bytes: Uint8Array): Promise<Uint8Array>;
+  inflate(bytes: Uint8Array): Promise<Uint8Array>;
+}
+
+const streamCodec: RawDeflate = {
+  deflate: (b) => pipe(b, new CompressionStream('deflate-raw')),
+  inflate: (b) => pipe(b, new DecompressionStream('deflate-raw')),
+};
+let codec = streamCodec;
+
+/**
+ * Replaces the payload compression. Browsers have 'deflate-raw' streams from Chrome 103; the AE panel's
+ * older Chromium doesn't, so it plugs in Node's zlib instead. Pass nothing to restore the default.
+ */
+export function setRawDeflate(c?: RawDeflate): void {
+  codec = c ?? streamCodec;
+}
+
 function toBase64Url(bytes: Uint8Array): string {
   let bin = '';
   for (const b of bytes) bin += String.fromCharCode(b);
@@ -104,7 +124,7 @@ export async function encodePayload(project: Project, graph: Graph, code: string
     bodyHash: hashBody(code),
     ...(custom.length ? { customNodes: custom } : {}),
   };
-  const packed = await pipe(new TextEncoder().encode(JSON.stringify(payload)), new CompressionStream('deflate-raw'));
+  const packed = await codec.deflate(new TextEncoder().encode(JSON.stringify(payload)));
   return `${PAYLOAD_PREFIX}v${PAYLOAD_VERSION}:${toBase64Url(packed)}`;
 }
 
@@ -135,7 +155,7 @@ export async function decodePayload(text: string): Promise<DecodedPayload | null
   if (version > PAYLOAD_VERSION) throw new Error(`This expression was made by a newer version (payload v${version})`);
   let data: unknown;
   try {
-    const json = new TextDecoder().decode(await pipe(fromBase64Url(m[2]!), new DecompressionStream('deflate-raw')));
+    const json = new TextDecoder().decode(await codec.inflate(fromBase64Url(m[2]!)));
     data = JSON.parse(json);
   } catch {
     throw new Error('The embedded graph is damaged (was the last line edited or cut short?)');

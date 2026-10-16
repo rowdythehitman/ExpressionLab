@@ -5,6 +5,8 @@ clean, readable AE expression that you paste into After Effects. Fully client-si
 
 **Open the app:** https://rowdythehitman.github.io/ExpressionLab/ (nothing to install).
 
+**In After Effects:** a dockable panel with *Apply to selected*. See [`docs/ae-panel.md`](docs/ae-panel.md) to install it.
+
 - Spec: [`docs/SPEC.md`](docs/SPEC.md)
 - Decisions log: [`docs/decisions.md`](docs/decisions.md)
 
@@ -49,7 +51,8 @@ The compiler (`src/core`) is pure TypeScript with no React or DOM code. Its test
 
 Manual checks for real After Effects are in [`docs/ae-verification.md`](docs/ae-verification.md).
 
-Next: the After Effects panel (CEP/ZXP).
+**After Effects panel (CEP):** the same app inside AE 2022+, with Apply to selected, Use selected property, Load
+from selected and Create globals in comp. See [`docs/ae-panel.md`](docs/ae-panel.md).
 
 ## Develop
 
@@ -62,6 +65,8 @@ npm run gen:verify # regenerate docs/ae-verification.md
 npm run typecheck
 npm run lint
 npm run build
+npm run build:panel  # After Effects panel → dist-panel/
+npm run package:zxp  # sign it into a .zxp (see docs/ae-panel.md)
 ```
 
 ## Deploy
@@ -74,7 +79,8 @@ unit tests first, so a red `main` doesn't deploy. One-time setup: in the repo's 
 
 ```
 src/core/      pure TS: types, schemas, node library (JSON), catalogs, typing, compiler
-src/app/       React UI
+src/app/       React UI (src/app/host: the After Effects adapter)
+cep/           CEP manifest and ExtendScript host script for the AE panel
 tests/         vitest suites (compiler, nodes, ...)
 docs/          spec, decisions
 ```

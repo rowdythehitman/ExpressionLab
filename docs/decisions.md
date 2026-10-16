@@ -175,3 +175,24 @@ Choices made where the spec (docs/SPEC.md) said "decide" or was ambiguous. Newes
     those inside macros), with globals from macro bodies. On import they merge by id, and existing definitions win.
 56. **Top bar:** Open, Save, Paste expression and the setup script moved into a **File** menu so the bar fits on one
     line next to the new **★ Custom nodes** button.
+
+## AE panel (CEP), part 1
+
+57. **CEP first, not UXP:** UXP for After Effects is still in beta, while CEP panels run in every AE from 2022 on. The
+    panel is the same app built with `--mode panel`. A host adapter (`src/app/host`) is the only code that knows
+    about AE. When there's no `window.__adobe_cep__` the app is the web app, unchanged.
+58. **Host script contract:** `cep/host/host.jsx` (ES3) exposes `ExpressionLab.*` functions that always return JSON
+    text, `{ok: true, ...}` or `{ok: false, error}`. Arguments are passed as ES3-safe string literals
+    (`jsxString`, shared with the setup script). Applying the expression is one undo group. Per-property failures,
+    including AE's `expressionError`, are reported instead of stopping the run. Only properties with
+    `canSetExpression` count as selected.
+59. **Targets from the selection:** match names map to targets (`ADBE Position` → position2D/3D by the layer's 3D
+    switch, `ADBE Text Expressible Amount` → textSelectorAmount, and so on). Properties under a text animator or an
+    effect use their value type. Anything else becomes Custom with its value type. Markers and other unsupported
+    types are refused.
+60. **Old Chromium:** CEP 11 runs Chromium 88. The build targets chrome88 syntax. `panel.ts` polyfills
+    `structuredClone` (a JSON clone; projects are plain JSON) and `Array.prototype.at`, and swaps the payload codec
+    for Node's zlib when `deflate-raw` streams are missing (`setRawDeflate`; same bytes, tested both ways). The
+    sandbox runtime avoids `.at()` because it runs unpolyfilled in the iframe.
+61. **Files in the panel:** downloads don't exist in CEP, so `downloadText` goes through `cep.fs` save dialogs. Copy
+    falls back to `execCommand` when the async clipboard is refused.

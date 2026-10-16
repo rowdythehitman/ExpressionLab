@@ -1,5 +1,6 @@
 // Autosave to IndexedDB, and .aenodes.json import/export (spec §12 Persistence).
 import { generateSetupScript, projectSchema, type Project } from '../core';
+import { getHost } from './host';
 import { useStore } from './store';
 
 const DB = 'expressionlab';
@@ -55,6 +56,12 @@ export async function startAutosave(): Promise<void> {
 
 /** Saves `text` as a file download. */
 export function downloadText(filename: string, text: string, type = 'text/plain'): void {
+  // Inside AE (CEP) there's no download manager: ask where to save instead.
+  const host = getHost();
+  if (host) {
+    host.saveTextFile(filename, text).catch((e: unknown) => window.alert(e instanceof Error ? e.message : String(e)));
+    return;
+  }
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([text], { type }));
   a.download = filename;
@@ -69,12 +76,7 @@ export function downloadSetupScript(project: Project): void {
 
 export function exportProject(project: Project): void {
   const name = (project.graphs[0]?.name || 'project').replace(/[^\w-]+/g, '-').toLowerCase();
-  const blob = new Blob([JSON.stringify(project, null, 2)], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `${name}.aenodes.json`;
-  a.click();
-  URL.revokeObjectURL(a.href);
+  downloadText(`${name}.aenodes.json`, JSON.stringify(project, null, 2), 'application/json');
 }
 
 /** Parses and validates an .aenodes.json file. Throws a readable error. */

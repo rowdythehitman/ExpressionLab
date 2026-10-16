@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- CEP manifest for the ExpressionLab panel. %VERSION% is filled in from package.json by `npm run build:panel`. -->
+<ExtensionManifest Version="7.0" ExtensionBundleId="com.expressionlab.panel" ExtensionBundleVersion="%VERSION%"
+  ExtensionBundleName="ExpressionLab" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <ExtensionList>
+    <Extension Id="com.expressionlab.panel.main" Version="%VERSION%" />
+  </ExtensionList>
+  <ExecutionEnvironment>
+    <HostList>
+      <!-- After Effects 2022 (22.0) and later. -->
+      <Host Name="AEFT" Version="[22.0,99.9]" />
+    </HostList>
+    <LocaleList>
+      <Locale Code="All" />
+    </LocaleList>
+    <RequiredRuntimeList>
+      <RequiredRuntime Name="CSXS" Version="11.0" />
+    </RequiredRuntimeList>
+  </ExecutionEnvironment>
+  <DispatchInfoList>
+    <Extension Id="com.expressionlab.panel.main">
+      <DispatchInfo>
+        <Resources>
+          <MainPath>./index.html</MainPath>
+          <ScriptPath>./host/host.jsx</ScriptPath>
+          <CEFCommandLine>
+            <!-- Node is only used for zlib on older CEP runtimes (see src/app/host/panel.ts). -->
+            <Parameter>--enable-nodejs</Parameter>
+            <Parameter>--allow-file-access-from-files</Parameter>
+          </CEFCommandLine>
+        </Resources>
+        <Lifecycle>
+          <AutoVisible>true</AutoVisible>
+        </Lifecycle>
+        <UI>
+          <Type>Panel</Type>
+          <Menu>ExpressionLab</Menu>
+          <Geometry>
+            <Size>
+              <Height>760</Height>
+              <Width>1280</Width>
+            </Size>
+            <MinSize>
+              <Height>400</Height>
+              <Width>640</Width>
+            </MinSize>
+          </Geometry>
+        </UI>
+      </DispatchInfo>
+    </Extension>
+  </DispatchInfoList>
+</ExtensionManifest>

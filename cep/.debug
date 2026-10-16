@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Dev builds only (PANEL_DEBUG=1): lets you inspect the panel at http://localhost:8088 in Chrome. -->
+<ExtensionList>
+  <Extension Id="com.expressionlab.panel.main">
+    <HostList>
+      <Host Name="AEFT" Port="8088" />
+    </HostList>
+  </Extension>
+</ExtensionList>

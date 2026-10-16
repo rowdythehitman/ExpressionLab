@@ -123,13 +123,13 @@ export function evaluateDetailed(code, c = {}, overrides = {}) {
       const b = keys[i];
       if (t <= b.time) return interp(t, a.time, b.time, a.value, b.value, (u) => u);
     }
-    return keys.at(-1).value;
+    return keys[keys.length - 1].value;
   };
   const loop = (dir) => (mode = 'cycle') => {
     if (keys.length < 2) throw new Error('loopIn/loopOut need 2+ keyframes on the property');
     if (mode !== 'cycle') throw new Error(`loop mode "${mode}" isn't modelled by the preview`);
     const first = keys[0];
-    const last = keys.at(-1);
+    const last = keys[keys.length - 1];
     const span = last.time - first.time;
     let t = ctx.time;
     if (dir === 'out' && t > last.time) t = first.time + ((t - first.time) % span);
@@ -171,7 +171,7 @@ export function evaluateDetailed(code, c = {}, overrides = {}) {
       },
       nextKey: (t) => {
         if (!keys.length) throw new Error('nextKey needs keyframes on the property');
-        const k = keys.find((x) => x.time > t) ?? keys.at(-1);
+        const k = keys.find((x) => x.time > t) ?? keys[keys.length - 1];
         return { time: k.time, value: k.value, index: keys.indexOf(k) + 1 };
       },
     },
@@ -232,7 +232,7 @@ export function evaluateDetailed(code, c = {}, overrides = {}) {
   };
 
   const lines = code.split('\n').filter((l) => !l.startsWith('//@ae-nodes:'));
-  while (lines.length && !lines.at(-1).trim()) lines.pop();
+  while (lines.length && !lines[lines.length - 1].trim()) lines.pop();
   const last = lines.pop() ?? 'undefined';
   const names = Object.keys(env);
   const fn = new Function(...names, `"use strict";\n${lines.join('\n')}\nreturn (${last});`);

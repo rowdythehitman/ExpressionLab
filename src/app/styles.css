@@ -338,3 +338,10 @@ kbd { font: 11px ui-monospace, Menlo, monospace; border: 1px solid var(--border)
 .make-macro input { flex: 1; }
 .menu-list { width: 220px; gap: 4px; }
 .menu-list button { text-align: left; border: 0; }
+
+/* After Effects panel (CEP) */
+.ae-bar { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+.ae-status { margin: 0; white-space: pre-wrap; }
+.ae-status.ok { color: var(--ok); }
+.ae-status.error { color: var(--error); }
+.ae-status.busy { color: var(--muted); }

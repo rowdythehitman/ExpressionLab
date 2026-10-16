@@ -1,7 +1,7 @@
 // Paste-back (spec §8): import an expression's embedded graph as a new tab.
 import { useEffect, useRef, useState } from 'react';
 import { decodePayload, hasPayload, type DecodedPayload } from '../../core';
-import { actions } from '../store';
+import { actions, useStore } from '../store';
 
 type State =
   | { step: 'closed' }
@@ -30,14 +30,20 @@ function isTypingTarget(t: EventTarget | null): boolean {
 }
 
 /** Renders the Import Expression dialog and listens for pasted expressions anywhere in the app. */
-export function ImportDialog({ openSignal }: { openSignal: number }) {
+export function ImportDialog() {
   const [state, setState] = useState<State>({ step: 'closed' });
   const textRef = useRef<HTMLTextAreaElement>(null);
-  const [lastSignal, setLastSignal] = useState(openSignal);
-  if (openSignal !== lastSignal) {
-    setLastSignal(openSignal);
-    setState({ step: 'paste', text: '' });
+  const request = useStore((s) => s.importRequest);
+  const [lastRequest, setLastRequest] = useState(request);
+  if (request !== lastRequest) {
+    setLastRequest(request);
+    setState({ step: 'paste', text: request.text ?? '' });
   }
+
+  // Text handed over with the request (Load from selected) is decoded right away.
+  useEffect(() => {
+    if (request.text) void decodeInto(request.text, setState);
+  }, [request]);
 
   const tryDecode = (text: string) => decodeInto(text, setState);
 

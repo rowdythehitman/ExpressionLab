@@ -10,9 +10,9 @@ export { suggestConverter, type ConverterFix } from './typing/converters';
 export type { NodeTypes } from './typing/resolve';
 export { isValidIdentifier, camelCase } from './compiler/naming';
 export {
-  embedGraph, decodePayload, hasPayload, importGraph, hashBody, globalsSubset, customNodesUsed,
-  PAYLOAD_PREFIX, PAYLOAD_WARN_BYTES, type DecodedPayload, type EmbedResult,
+  embedGraph, decodePayload, setRawDeflate, hasPayload, importGraph, hashBody, globalsSubset, customNodesUsed,
+  PAYLOAD_PREFIX, PAYLOAD_WARN_BYTES, type DecodedPayload, type EmbedResult, type RawDeflate,
 } from './compiler/embed';
-export { generateSetupScript } from './setup/jsx';
+export { generateSetupScript, jsxString } from './setup/jsx';
 export { nodeLibrary, validateCustomNode, CUSTOM_PREFIX } from './library';
 export { expandMacros, makeMacro, type MakeMacroResult } from './macro';

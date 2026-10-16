@@ -32,6 +32,8 @@ interface State {
   renamingId: string | null;
   /** Custom Nodes dialog: closed (null) or open, optionally on one node. */
   customDialog: { focusId?: string } | null;
+  /** Import Expression dialog requests; `text` is decoded straight away (Load from selected, in AE). */
+  importRequest: { n: number; text?: string };
   connectError: ConnectError | null;
 
   /** Apply an undoable change. */
@@ -59,6 +61,7 @@ export const useStore = create<State>((set, get) => ({
   selection: [],
   renamingId: null,
   customDialog: null,
+  importRequest: { n: 0 },
   connectError: null,
 
   update(recipe, coalesceKey) {
@@ -445,12 +448,18 @@ export const actions = {
   },
 
   /** Adds a graph decoded from a pasted expression (spec §8). */
+  /** Opens the Import Expression dialog, decoding `text` if given. */
+  openImport(text?: string) {
+    useStore.setState((s) => ({ importRequest: { n: s.importRequest.n + 1, text } }));
+  },
+
   importDecoded(decoded: DecodedPayload) {
     const { project, update, setGraph } = useStore.getState();
     const { project: merged, graphId } = importGraph(project, decoded, () => newId('g'));
     update((p) => {
       p.globals = merged.globals;
       p.graphs = merged.graphs;
+      if (merged.customNodes) p.customNodes = merged.customNodes;
     });
     setGraph(graphId);
   },
