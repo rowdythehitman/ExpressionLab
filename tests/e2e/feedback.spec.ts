@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
-const head = (page: Page, title: RegExp) => page.locator('.ae-node-head', { hasText: title });
+const head = (page: Page, title: RegExp) =>
+  page.locator('.ae-node-head', { has: page.locator('.ae-node-name', { hasText: title }) });
 const nodeWith = (page: Page, title: RegExp) => page.locator('.ae-node', { has: head(page, title) });
 
 test.beforeEach(async ({ page }) => {
@@ -44,16 +45,16 @@ test('dropping a wire on empty canvas offers only compatible nodes, connected', 
   await expect(page.locator('.inspector .insp-row').first()).toContainText('← Wiggle Freq');
 });
 
-test('inspector: variable name shows the emitted identifier, colour and previewer toggle', async ({ page }) => {
+test('inspector: name shows the emitted identifier, colour and previewer toggle', async ({ page }) => {
   await head(page, /^Wiggle$/).click();
   await expect(page.locator('#var-help')).toContainText('wiggle1');
-  await page.getByLabel('Variable name').fill('Shake');
+  await page.getByLabel('Name', { exact: true }).fill('Shake');
   await expect(page.locator('#var-help')).toContainText('shake');
   await expect(page.locator('.cm-content')).toContainText('const shake = wiggle(');
   await page.locator('.swatch-btn[aria-label="#2f4b7e"]').click();
   await expect(head(page, /^Shake/)).toHaveCSS('background-color', 'rgb(47, 75, 126)');
   await page.getByLabel('Add to Previewer').check();
-  await expect(head(page, /^Shake/).locator('.ae-node-badge')).toBeVisible();
+  await expect(head(page, /^Shake/).locator('.ae-node-preview.on')).toBeVisible();
 });
 
 test('output preview: scrub time, override a node, adjust a control', async ({ page }) => {

@@ -2,7 +2,7 @@
   "version": 1,
   "globals": {
     "ctrls": {
-      "layerName": "CTRLS"
+      "layerName": "GLOBALS"
     },
     "layers": [],
     "controls": [

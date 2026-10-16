@@ -39,7 +39,7 @@ export function Inspector() {
   const isOutput = def.special === 'output';
   const control = def.special === 'ref.control' ? controls.find((c) => c.id === inst.ref?.controlId) : undefined;
   const types = analysis.types.get(inst.id);
-  const nameable = !isOutput && !def.inline && def.category !== 'context';
+  const makesVariable = !isOutput && !def.inline && def.category !== 'context';
   const emitted = result.variables[inst.id];
   const live = inst.id in result.variables;
   const typed = inst.name || control?.effectName || def.label;
@@ -58,21 +58,23 @@ export function Inspector() {
       </div>
       <p className="small">{def.description}</p>
 
-      {nameable && (
-        <label className="field">
-          Variable name
+      {!isOutput && (
+        <div className="field">
+          <label htmlFor="node-name-field">Name</label>
           <input
+            id="node-name-field"
             value={inst.name ?? ''}
             placeholder={control?.effectName || def.label}
             onChange={(e) => actions.renameNode(inst.id, e.target.value)}
             aria-describedby="var-help"
           />
           <span id="var-help" className="small muted">
-            {!live ? 'Not connected to the output, so nothing is emitted yet.'
-              : !emitted?.length ? 'Folded into the expression that uses it (no variable).'
-              : <>Emitted as {emitted.map((v) => <code key={v}>{v}</code>)}{adjusted && ' (adjusted: reserved word or already taken)'}. Also the node's title.</>}
+            {!makesVariable ? 'Shown on the node. This node is written inline, so the name doesn\'t appear in the code.'
+              : !live ? 'Shown on the node, and used as the variable name once it\'s connected to the output.'
+              : !emitted?.length ? 'Shown on the node. It\'s folded into the expression that uses it (no variable).'
+              : <>Shown on the node and used as the variable name: {emitted.map((v) => <code key={v}>{v}</code>)}{adjusted && ' (adjusted: reserved word or already taken)'}.</>}
           </span>
-        </label>
+        </div>
       )}
 
       {!isOutput && (

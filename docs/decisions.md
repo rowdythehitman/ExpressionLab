@@ -112,3 +112,16 @@ Choices made where the spec (docs/SPEC.md) said "decide" or was ambiguous. Newes
 43. **Curve chart:** the series colours (x/y/z/w) were checked with the dataviz palette validator against the dark
     surface, and all checks pass. Lines are 2px, with a legend plus direct labels and a hover crosshair and tooltip.
     Click or drag on the chart to scrub.
+
+## Feedback round 2
+
+44. **The controls null is called `GLOBALS` by default** (the spec said `CTRLS`). New projects and every preset use it;
+    saved projects keep whatever name they have. The golden example in §7.4 now reads `const GLOBALS = …`.
+45. **Node headers read `[Type] Name`.** The name defaults to the node type (a control's effect name for Control
+    nodes). Rename it by double-clicking it, pressing F2 on the selected node, or in the inspector. Clearing the name
+    restores the default. For nodes that become a variable, the name is also the variable name. For inline nodes
+    (Time, Value, This Layer…) it's only a label.
+46. **The ○/◉ circle on each node header toggles "Add to Previewer".** The inspector checkbox does the same.
+47. **Globals are edited in a dialog** opened from the Globals button or any chip. It has a card for the GLOBALS null,
+    one for "this layer", and one per layer, each listing its controls with add/rename/retype/move/delete, plus comps.
+    Deleting a layer moves its controls onto the GLOBALS null instead of dropping them.

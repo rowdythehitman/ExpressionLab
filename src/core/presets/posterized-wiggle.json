@@ -1,7 +1,7 @@
 {
   "version": 1,
   "globals": {
-    "ctrls": { "layerName": "CTRLS" },
+    "ctrls": { "layerName": "GLOBALS" },
     "layers": [],
     "controls": [
       { "id": "c-fps", "effectName": "Stop Motion FPS", "type": "slider", "host": "ctrls" },
