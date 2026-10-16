@@ -2,7 +2,7 @@
 import { produce } from 'immer';
 import { create } from 'zustand';
 import type { ConverterFix, DecodedPayload, Graph, Literal, NodeDef, NodeInstance, Project } from '../core';
-import { importGraph, NODE_DEFS } from '../core';
+import { analyzeGraph, importGraph, makeMacro, nodeLibrary } from '../core';
 import { copyNodes, pasteNodes, type NodeClip } from './clipboard';
 import { PRESETS } from '../core/presets';
 
@@ -30,6 +30,8 @@ interface State {
   selection: string[];
   /** Node whose name is being edited on the canvas. */
   renamingId: string | null;
+  /** Custom Nodes dialog: closed (null) or open, optionally on one node. */
+  customDialog: { focusId?: string } | null;
   connectError: ConnectError | null;
 
   /** Apply an undoable change. */
@@ -56,6 +58,7 @@ export const useStore = create<State>((set, get) => ({
   selectedNodeId: null,
   selection: [],
   renamingId: null,
+  customDialog: null,
   connectError: null,
 
   update(recipe, coalesceKey) {
@@ -121,6 +124,15 @@ export const useStore = create<State>((set, get) => ({
 
 // ---- Selectors / helpers ----
 
+/** The project's node library (built-ins + custom nodes), cached so React selectors stay stable. */
+let libCache: { key: unknown; lib: ReadonlyMap<string, NodeDef> } | null = null;
+export function libraryFor(p: Project): ReadonlyMap<string, NodeDef> {
+  if (!libCache || libCache.key !== p.customNodes) libCache = { key: p.customNodes, lib: nodeLibrary(p) };
+  return libCache.lib;
+}
+export const useDefs = () => useStore((s) => libraryFor(s.project));
+export const getDefs = () => libraryFor(useStore.getState().project);
+
 export function activeGraph(p: Project, graphId: string): Graph {
   return p.graphs.find((g) => g.id === graphId) ?? p.graphs[0]!;
 }
@@ -164,7 +176,7 @@ export const actions = {
   addNode(type: string, position: { x: number; y: number }): string {
     const id = newId('n');
     editGraph((g, p) => {
-      g.nodes.push(newNodeInstance(NODE_DEFS.get(type), type, id, position, p));
+      g.nodes.push(newNodeInstance(libraryFor(p).get(type), type, id, position, p));
     });
     useStore.getState().select(id);
     return id;
@@ -174,7 +186,7 @@ export const actions = {
   addNodeWired(type: string, position: { x: number; y: number }, wire: PendingWire, port: string): string {
     const id = newId('n');
     editGraph((g, p) => {
-      g.nodes.push(newNodeInstance(NODE_DEFS.get(type), type, id, position, p));
+      g.nodes.push(newNodeInstance(libraryFor(p).get(type), type, id, position, p));
       const from = wire.side === 'source' ? { node: wire.node, port: wire.port } : { node: id, port };
       const to = wire.side === 'source' ? { node: id, port } : { node: wire.node, port: wire.port };
       g.edges = g.edges.filter((e) => !(e.to.node === to.node && e.to.port === to.port));
@@ -212,6 +224,87 @@ export const actions = {
   duplicateSelection() {
     const clip = actions.copySelection();
     if (clip) actions.paste(clip);
+  },
+
+  /** Replaces the selected nodes with one macro node. Returns an error message, or null on success. */
+  makeMacroFromSelection(name: string): string | null {
+    const { project, graphId, selection } = useStore.getState();
+    const g = activeGraph(project, graphId);
+    const defs = libraryFor(project);
+    const types = analyzeGraph(project, g, defs).types;
+    const r = makeMacro(project, g, selection, name, defs,
+      (id, port, side) => types.get(id)?.[side === 'in' ? 'inputs' : 'outputs'].get(port) ?? 'number', newId);
+    if ('error' in r) return r.error;
+    useStore.getState().update((p) => {
+      p.customNodes = [...(p.customNodes ?? []), r.def];
+      const i = p.graphs.findIndex((x) => x.id === g.id);
+      p.graphs[i] = r.graph;
+    });
+    useStore.getState().select(r.instanceId);
+    return null;
+  },
+
+  /** Puts a macro's nodes back on the canvas in place of the macro node (the macro stays in the library). */
+  ungroupMacro(instanceId: string) {
+    const { project, graphId } = useStore.getState();
+    const g = activeGraph(project, graphId);
+    const inst = g.nodes.find((n) => n.id === instanceId);
+    const body = inst && libraryFor(project).get(inst.type)?.macro;
+    if (!inst || !body) return;
+    const idMap = new Map(body.nodes.map((n) => [n.id, newId('n')]));
+    const cx = body.nodes.reduce((s, n) => s + n.position.x, 0) / body.nodes.length;
+    const cy = body.nodes.reduce((s, n) => s + n.position.y, 0) / body.nodes.length;
+    editGraph((gr) => {
+      for (const n of body.nodes) {
+        const copy = structuredClone(n);
+        copy.id = idMap.get(n.id)!;
+        copy.position = { x: Math.round(inst.position.x + n.position.x - cx), y: Math.round(inst.position.y + n.position.y - cy) };
+        // Unwired macro inputs carry their value onto the inner ports they fed.
+        for (const mi of body.inputs) {
+          if (inst.inputs[mi.id] === undefined || gr.edges.some((e) => e.to.node === instanceId && e.to.port === mi.id)) continue;
+          for (const t of mi.targets) if (t.node === n.id) copy.inputs[t.port] = inst.inputs[mi.id]!;
+        }
+        gr.nodes.push(copy);
+      }
+      const next = [];
+      for (const e of gr.edges) {
+        if (e.to.node === instanceId) {
+          const mi = body.inputs.find((x) => x.id === e.to.port);
+          for (const t of mi?.targets ?? []) next.push({ id: newId('e'), from: e.from, to: { node: idMap.get(t.node)!, port: t.port } });
+        } else if (e.from.node === instanceId) {
+          const mo = body.outputs.find((x) => x.id === e.from.port);
+          if (mo) next.push({ ...e, from: { node: idMap.get(mo.node)!, port: mo.port } });
+        } else next.push(e);
+      }
+      for (const e of body.edges) {
+        next.push({ id: newId('e'), from: { node: idMap.get(e.from.node)!, port: e.from.port }, to: { node: idMap.get(e.to.node)!, port: e.to.port } });
+      }
+      gr.edges = next;
+      gr.nodes = gr.nodes.filter((n) => n.id !== instanceId);
+    });
+    useStore.getState().setSelection([...idMap.values()]);
+  },
+
+  /** Adds or replaces a custom node. Renaming its id updates every instance (and macros using it). */
+  saveCustomNode(def: NodeDef, previousId?: string) {
+    useStore.getState().update((p) => {
+      const list = p.customNodes ?? [];
+      const i = previousId ? list.findIndex((d) => d.id === previousId) : -1;
+      if (i >= 0) list[i] = def;
+      else list.push(def);
+      p.customNodes = list;
+      if (previousId && previousId !== def.id) {
+        const retype = (nodes: NodeInstance[]) => { for (const n of nodes) if (n.type === previousId) n.type = def.id; };
+        for (const g of p.graphs) retype(g.nodes);
+        for (const d of list) if (d.macro) retype(d.macro.nodes);
+      }
+    });
+  },
+
+  deleteCustomNode(id: string) {
+    useStore.getState().update((p) => {
+      p.customNodes = (p.customNodes ?? []).filter((d) => d.id !== id);
+    });
   },
 
   setNodeColor(nodeId: string, color: string | undefined) {

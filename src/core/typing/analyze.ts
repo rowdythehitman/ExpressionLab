@@ -1,6 +1,7 @@
 // Graph-level type analysis for the UI: port types, and whether a new connection is allowed.
 import { TARGETS } from '../catalog';
-import { NODE_DEFS } from '../nodes';
+import { nodeLibrary } from '../library';
+import { expandMacros, hasMacros } from '../macro';
 import { topoSort } from '../compiler/topo';
 import type { Edge, Graph, NodeDef, Project, ValueType } from '../types';
 import { suggestConverter, type ConverterFix } from './converters';
@@ -29,7 +30,40 @@ export interface GraphAnalysis {
   issues: TypeIssue[];
 }
 
-export function analyzeGraph(project: Project, graph: Graph, defs: ReadonlyMap<string, NodeDef> = NODE_DEFS): GraphAnalysis {
+export function analyzeGraph(project: Project, graph: Graph, defs: ReadonlyMap<string, NodeDef> = nodeLibrary(project)): GraphAnalysis {
+  if (!hasMacros(graph, defs)) return analyzeFlat(project, graph, defs);
+  // Analyse the expanded graph, then report each macro instance's ports from the inner ports they map to.
+  const exp = expandMacros(graph, defs);
+  const flat = analyzeFlat(project, exp.graph, defs);
+  const types = new Map(flat.types);
+  const typeOf = (key: string, side: 'inputs' | 'outputs') => {
+    const i = key.lastIndexOf(':');
+    return flat.types.get(key.slice(0, i))?.[side].get(key.slice(i + 1));
+  };
+  for (const n of graph.nodes) {
+    const d = defs.get(n.type);
+    if (!d?.macro) continue;
+    const inputs = new Map<string, string>();
+    for (const p of d.inputs) {
+      const first = exp.inputs.get(`${n.id}:${p.id}`)?.[0];
+      inputs.set(p.id, (first && typeOf(first, 'inputs')) ?? p.type);
+    }
+    const outputs = new Map<string, string>();
+    for (const o of d.outputs) {
+      const inner = exp.outputs.get(`${n.id}:${o.id}`);
+      outputs.set(o.id, (inner && typeOf(inner, 'outputs')) ?? o.type);
+    }
+    types.set(n.id, { bindings: {}, inputs, outputs });
+  }
+  const issues = flat.issues.map((i) => ({
+    ...i,
+    nodeId: exp.origin.get(i.nodeId) ?? i.nodeId,
+    edgeId: i.edgeId?.includes('/') ? undefined : i.edgeId?.split('>')[0],
+  }));
+  return { types, issues };
+}
+
+function analyzeFlat(project: Project, graph: Graph, defs: ReadonlyMap<string, NodeDef>): GraphAnalysis {
   const incoming = incomingOf(graph, defs);
   const edges = [...incoming.values()].flatMap((m) => [...m.values()]);
   const { order, cycle } = topoSort(graph.nodes, edges);
@@ -47,7 +81,7 @@ export function checkConnection(
   graph: Graph,
   from: { node: string; port: string },
   to: { node: string; port: string },
-  defs: ReadonlyMap<string, NodeDef> = NODE_DEFS,
+  defs: ReadonlyMap<string, NodeDef> = nodeLibrary(project),
 ): ConnectionCheck {
   if (from.node === to.node) return { ok: false, reason: "A node can't connect to itself" };
   // Would this edge close a loop? (Is `from` downstream of `to`?)
@@ -68,7 +102,7 @@ export function checkConnection(
     edges: [...graph.edges.filter((e) => !(e.to.node === to.node && e.to.port === to.port)), edge],
   };
   const { issues } = analyzeGraph(project, trial, defs);
-  const issue = issues.find((i) => i.edgeId === edge.id);
+  const issue = issues.find((i) => i.edgeId === edge.id || i.edgeId?.startsWith(`${edge.id}>`));
   if (!issue) return { ok: true };
   const fix = issue.actual && issue.expected ? suggestConverter(issue.actual, issue.expected) : undefined;
   return { ok: false, reason: `Expected ${issue.expected}, got ${issue.actual}`, fix };

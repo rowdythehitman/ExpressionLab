@@ -3,10 +3,10 @@
 // and a control: time/value use the scrubbers, controls get their preview value, literals edit the
 // node, anything else can be overridden.
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { compile, NODE_DEFS, type NodeInstance } from '../../core';
+import { compile, type NodeInstance } from '../../core';
 import { buildContext, defaultPropertyValue, formatValue, parseValue, targetType } from '../preview/context';
 import { evaluateInSandbox, type EvalJob, type EvalResult } from '../preview/sandbox';
-import { actions, useStore } from '../store';
+import { actions, useDefs, useStore } from '../store';
 import { useCompiled } from '../useCompiled';
 import { ParamWidget } from './AeNode';
 import { CurveChart, type CurvePoint } from './CurveChart';
@@ -19,6 +19,7 @@ interface Override { on: boolean; text: string }
 export function Preview() {
   const { graph, analysis, result } = useCompiled();
   const project = useStore((s) => s.project);
+  const defs = useDefs();
   const vt = targetType(graph);
 
   const [time, setTime] = useState(0);
@@ -31,7 +32,7 @@ export function Preview() {
   const [overrides, setOverrides] = useState<Record<string, Override>>({});
 
   const tagged = graph.nodes.filter((n) => n.preview);
-  const usesMarkers = graph.nodes.some((n) => NODE_DEFS.get(n.type)?.category === 'marker');
+  const usesMarkers = graph.nodes.some((n) => defs.get(n.type)?.category === 'marker');
   const usesText = graph.target.id === 'textSelectorAmount';
   const defaultValue = useMemo(() => defaultPropertyValue(graph, vt), [graph, vt]);
   const value = valueText == null ? defaultValue : parseValue(valueText, vt);
@@ -197,7 +198,8 @@ function PreviewNodeRow({ node, probes, live, overrides, setOverride }: {
   setOverride: (key: string, o: Override) => void;
 }) {
   const project = useStore((s) => s.project);
-  const def = NODE_DEFS.get(node.type);
+  const defs = useDefs();
+  const def = defs.get(node.type);
   if (!def) return null;
   const control = def.special === 'ref.control' ? project.globals.controls.find((c) => c.id === node.ref?.controlId) : undefined;
   const title = node.name || control?.effectName || def.label;

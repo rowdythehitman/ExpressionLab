@@ -25,3 +25,45 @@ test('downloads an AE setup script for the globals', async ({ page }) => {
   expect(js).toContain('ensureNull("GLOBALS", false)');
   expect(js).toContain('ensureControl(globalsLayer, "Wiggle Freq", "ADBE Slider Control"');
 });
+
+const head = (page: import('@playwright/test').Page, t: RegExp) =>
+  page.locator('.ae-node-head', { has: page.locator('.ae-node-name', { hasText: t }) });
+
+test('select nodes → Make macro → same output; Ungroup restores them', async ({ page }) => {
+  const code = page.locator('.cm-content');
+  await head(page, /^Wiggle Freq$/).click();
+  await head(page, /^Wiggle Amp$/).click({ modifiers: ['Shift'] });
+  await head(page, /^Wiggle$/).click({ modifiers: ['Shift'] });
+  await page.getByPlaceholder('Macro name').fill('Shaker');
+  await page.getByRole('button', { name: 'Make macro' }).click();
+  await expect(page.locator('.ae-node')).toHaveCount(4);
+  await expect(page.locator('.ae-node-chip', { hasText: 'Shaker' })).toBeVisible();
+  await expect(code).toContainText('const shakerWiggle = wiggle(wiggleFreq, wiggleAmp, 1, 0.5);');
+  await expect(page.locator('.diag.error')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Ungroup' }).click();
+  await expect(page.locator('.ae-node')).toHaveCount(6);
+});
+
+test('custom nodes: invalid JSON is explained, a valid node lands in the palette and compiles', async ({ page }) => {
+  await page.getByRole('button', { name: '★ Custom nodes' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Custom nodes' });
+  await dialog.getByRole('button', { name: '+ New node' }).click();
+  const editor = dialog.locator('.json-editor .cm-content');
+  await editor.click();
+  await page.keyboard.press('Control+a');
+  await page.keyboard.insertText('{"id":"user.half","label":"Half","category":"math","description":"a / 2","tags":[],"inputs":[{"id":"a","label":"A","type":"number","default":10}],"outputs":[{"id":"out","label":"R","type":"number","expr":"{{in.b}} / 2"}]}');
+  await expect(dialog.locator('.custom-problems')).toContainText("{{in.b}} doesn't match any declared input");
+  await editor.click();
+  await page.keyboard.press('Control+a');
+  await page.keyboard.insertText('{"id":"user.half","label":"Half","category":"math","description":"a / 2","tags":[],"inputs":[{"id":"a","label":"A","type":"number","default":10}],"outputs":[{"id":"out","label":"R","type":"number","expr":"{{in.a}} / 2"}]}');
+  await dialog.getByRole('button', { name: 'Add node' }).click();
+  await dialog.getByRole('button', { name: 'Close' }).click();
+
+  await page.locator('.palette .search').fill('half');
+  await page.locator('.palette-item', { hasText: 'Half' }).click();
+  // Wire Half into Wiggle's Amount with the wire-drop quick-add flow's sibling: drag output → input.
+  const src = page.locator('.ae-node', { has: page.locator('.ae-node-chip', { hasText: 'Half' }) }).locator('.react-flow__handle.source');
+  const dst = page.locator('.ae-node', { has: page.locator('.ae-node-name', { hasText: /^Wiggle$/ }) }).locator('.react-flow__handle[data-handleid="amp"]');
+  await src.dragTo(dst);
+  await expect(page.locator('.cm-content')).toContainText('const half = 10 / 2;');
+});

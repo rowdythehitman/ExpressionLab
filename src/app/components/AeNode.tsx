@@ -1,8 +1,8 @@
 // A node on the canvas: typed ports, inline widgets for unconnected inputs, params, global pickers.
 import { Handle, Position, type NodeProps, type Node as RFNode } from '@xyflow/react';
 import { memo, useState } from 'react';
-import { CONTROLS, NODE_DEFS, PROPERTIES, type Literal, type NodeInstance, type NodeTypes, type ParamDef, type PortDef } from '../../core';
-import { actions, useStore, activeGraph } from '../store';
+import { CONTROLS, PROPERTIES, type Literal, type NodeInstance, type NodeTypes, type ParamDef, type PortDef } from '../../core';
+import { actions, useStore, activeGraph, useDefs } from '../store';
 import { portClass } from './ports';
 
 export type AeNodeData = {
@@ -15,10 +15,11 @@ const DIMS: Record<string, number> = { vec2: 2, vec3: 3, color: 4 };
 
 function AeNodeImpl({ id, data, selected }: NodeProps<RFNode<AeNodeData>>) {
   const inst = useStore((s) => activeGraph(s.project, s.graphId).nodes.find((n) => n.id === id));
+  const defs = useDefs();
   const globals = useStore((s) => s.project.globals);
   const [advanced, setAdvanced] = useState(false);
   if (!inst) return null;
-  const def = NODE_DEFS.get(inst.type);
+  const def = defs.get(inst.type);
   if (!def) {
     return <div className="ae-node status-error"><div className="ae-node-head">Unknown: {inst.type}</div></div>;
   }

@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { APP_NAME, TARGETS, type Settings, type ValueType } from '../../core';
 import { PRESETS } from '../../core/presets';
-import { exportProject, parseProjectFile } from '../persist';
+import { downloadSetupScript, exportProject, parseProjectFile } from '../persist';
 import { actions, useGraph, useStore } from '../store';
 
 /** Targets with 2D/3D variants are shown once, with a 3D toggle (spec §12). */
@@ -20,6 +20,7 @@ export function TopBar({ onPasteImport }: { onPasteImport: () => void }) {
   const canUndo = useStore((s) => s.past.length > 0);
   const canRedo = useStore((s) => s.future.length > 0);
   const fileRef = useRef<HTMLInputElement>(null);
+  const fileMenu = useRef<HTMLDetailsElement>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
   const { base, is3D } = splitTarget(graph.target.id);
@@ -117,10 +118,17 @@ export function TopBar({ onPasteImport }: { onPasteImport: () => void }) {
         ))}
       </select>
 
-      <button className="ghost" onClick={onPasteImport} title="Paste an expression copied from ExpressionLab to edit its graph">Paste expression</button>
-      <button className="ghost" onClick={() => fileRef.current?.click()} title="Open a .aenodes.json project">Open</button>
+      <button className="ghost" onClick={() => useStore.setState({ customDialog: {} })} title="Create and edit your own nodes">★ Custom nodes</button>
+      <details className="menu" ref={fileMenu}>
+        <summary>File</summary>
+        <div className="menu-body menu-list" onClick={() => fileMenu.current?.removeAttribute('open')}>
+          <button className="ghost" onClick={() => fileRef.current?.click()} title="Open a .aenodes.json project">Open project…</button>
+          <button className="ghost" onClick={() => exportProject(project)} title="Save the project as .aenodes.json">Save project</button>
+          <button className="ghost" onClick={onPasteImport} title="Paste an expression copied from ExpressionLab to edit its graph">Paste expression…</button>
+          <button className="ghost" onClick={() => downloadSetupScript(project)} title="Creates the GLOBALS null, layers and controls in your comp">AE setup script (.jsx)</button>
+        </div>
+      </details>
       <input ref={fileRef} type="file" accept=".json,application/json" hidden onChange={(e) => void onImport(e.target.files?.[0])} />
-      <button className="ghost" onClick={() => exportProject(project)} title="Save the project as .aenodes.json">Save</button>
 
       <details className="menu">
         <summary>Settings</summary>

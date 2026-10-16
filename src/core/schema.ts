@@ -66,6 +66,7 @@ export const nodeDefSchema = z.object({
   special: z.enum(['ref.control', 'ref.layer', 'ref.property', 'literal', 'output', 'reroute', 'comment']).optional(),
   inline: z.boolean().optional(),
   noInline: z.boolean().optional(),
+  macro: z.lazy(() => macroSchema).optional(),
   controlTypes: z.array(z.enum(['slider', 'checkbox', 'dropdown', 'color', 'point', 'point3d', 'angle', 'layer'])).optional(),
   source: z.string().optional(),
   verify: z.string().optional(),
@@ -89,6 +90,14 @@ export const nodeInstanceSchema = z.object({
 
 const endpoint = z.object({ node: z.string(), port: z.string() });
 export const edgeSchema = z.object({ id: z.string().min(1), from: endpoint, to: endpoint });
+
+const portRef = z.object({ node: z.string(), port: z.string() });
+const macroSchema = z.object({
+  nodes: z.array(nodeInstanceSchema),
+  edges: z.array(edgeSchema),
+  inputs: z.array(z.object({ id: z.string().min(1), targets: z.array(portRef) })),
+  outputs: z.array(z.object({ id: z.string().min(1), node: z.string(), port: z.string() })),
+});
 
 export const graphSchema = z.object({
   id: z.string().min(1),
@@ -134,6 +143,7 @@ export const projectSchema = z.object({
   version: z.literal(1),
   globals: globalsSchema,
   graphs: z.array(graphSchema),
+  customNodes: z.array(nodeDefSchema).optional(),
   settings: settingsSchema,
 }) satisfies z.ZodType<Project>;
 
