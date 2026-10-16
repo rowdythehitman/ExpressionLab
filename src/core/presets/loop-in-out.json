@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "globals": {
+    "ctrls": {
+      "layerName": "GLOBALS"
+    },
+    "layers": [],
+    "controls": [],
+    "comps": []
+  },
+  "graphs": [
+    {
+      "id": "loop-in-out",
+      "name": "Loop In and Out",
+      "target": {
+        "id": "position2D"
+      },
+      "nodes": [
+        {
+          "id": "x",
+          "type": "anim.loop",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "inputs": {},
+          "params": {
+            "dir": "both"
+          }
+        },
+        {
+          "id": "out",
+          "type": "output",
+          "position": {
+            "x": 320,
+            "y": 0
+          },
+          "inputs": {},
+          "params": {}
+        }
+      ],
+      "edges": [
+        {
+          "id": "x.out-out.in",
+          "from": {
+            "node": "x",
+            "port": "out"
+          },
+          "to": {
+            "node": "out",
+            "port": "in"
+          }
+        }
+      ]
+    }
+  ],
+  "settings": {
+    "aeTarget": 26,
+    "useMatchNames": false,
+    "comments": "minimal",
+    "embedGraph": true
+  }
+}

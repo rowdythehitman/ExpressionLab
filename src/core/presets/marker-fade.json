@@ -1,0 +1,355 @@
+{
+  "version": 1,
+  "globals": {
+    "ctrls": {
+      "layerName": "GLOBALS"
+    },
+    "layers": [],
+    "controls": [],
+    "comps": []
+  },
+  "graphs": [
+    {
+      "id": "marker-fade",
+      "name": "Auto Fade In & Out by Marker Duration",
+      "target": {
+        "id": "opacity"
+      },
+      "nodes": [
+        {
+          "id": "mc",
+          "type": "marker.current",
+          "position": {
+            "x": 0,
+            "y": 100
+          },
+          "inputs": {},
+          "params": {},
+          "name": "Marker"
+        },
+        {
+          "id": "t",
+          "type": "ctx.time",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "inputs": {},
+          "params": {}
+        },
+        {
+          "id": "fade",
+          "type": "lit.number",
+          "position": {
+            "x": 0,
+            "y": 330
+          },
+          "inputs": {},
+          "params": {
+            "value": 0.5
+          },
+          "name": "Fade (s)"
+        },
+        {
+          "id": "inEnd",
+          "type": "math.op",
+          "position": {
+            "x": 250,
+            "y": 250
+          },
+          "inputs": {},
+          "params": {
+            "op": "add"
+          },
+          "name": "Fade In End"
+        },
+        {
+          "id": "end",
+          "type": "math.op",
+          "position": {
+            "x": 250,
+            "y": 380
+          },
+          "inputs": {},
+          "params": {
+            "op": "add"
+          },
+          "name": "Marker End"
+        },
+        {
+          "id": "outStart",
+          "type": "math.op",
+          "position": {
+            "x": 500,
+            "y": 380
+          },
+          "inputs": {},
+          "params": {
+            "op": "sub"
+          },
+          "name": "Fade Out Start"
+        },
+        {
+          "id": "fin",
+          "type": "math.remap",
+          "position": {
+            "x": 750,
+            "y": 0
+          },
+          "inputs": {},
+          "params": {
+            "mode": "ease"
+          },
+          "name": "Fade In"
+        },
+        {
+          "id": "fout",
+          "type": "math.remap",
+          "position": {
+            "x": 750,
+            "y": 300
+          },
+          "inputs": {
+            "outMin": 100,
+            "outMax": 0
+          },
+          "params": {
+            "mode": "ease"
+          },
+          "name": "Fade Out"
+        },
+        {
+          "id": "both",
+          "type": "math.op",
+          "position": {
+            "x": 1000,
+            "y": 150
+          },
+          "inputs": {},
+          "params": {
+            "op": "min"
+          },
+          "name": "Faded"
+        },
+        {
+          "id": "sel",
+          "type": "logic.select",
+          "position": {
+            "x": 1250,
+            "y": 150
+          },
+          "inputs": {
+            "b": 0
+          },
+          "params": {},
+          "name": "Result"
+        },
+        {
+          "id": "out",
+          "type": "output",
+          "position": {
+            "x": 1500,
+            "y": 150
+          },
+          "inputs": {},
+          "params": {}
+        }
+      ],
+      "edges": [
+        {
+          "id": "mc.time-inEnd.a",
+          "from": {
+            "node": "mc",
+            "port": "time"
+          },
+          "to": {
+            "node": "inEnd",
+            "port": "a"
+          }
+        },
+        {
+          "id": "fade.out-inEnd.b",
+          "from": {
+            "node": "fade",
+            "port": "out"
+          },
+          "to": {
+            "node": "inEnd",
+            "port": "b"
+          }
+        },
+        {
+          "id": "mc.time-end.a",
+          "from": {
+            "node": "mc",
+            "port": "time"
+          },
+          "to": {
+            "node": "end",
+            "port": "a"
+          }
+        },
+        {
+          "id": "mc.duration-end.b",
+          "from": {
+            "node": "mc",
+            "port": "duration"
+          },
+          "to": {
+            "node": "end",
+            "port": "b"
+          }
+        },
+        {
+          "id": "end.out-outStart.a",
+          "from": {
+            "node": "end",
+            "port": "out"
+          },
+          "to": {
+            "node": "outStart",
+            "port": "a"
+          }
+        },
+        {
+          "id": "fade.out-outStart.b",
+          "from": {
+            "node": "fade",
+            "port": "out"
+          },
+          "to": {
+            "node": "outStart",
+            "port": "b"
+          }
+        },
+        {
+          "id": "t.out-fin.t",
+          "from": {
+            "node": "t",
+            "port": "out"
+          },
+          "to": {
+            "node": "fin",
+            "port": "t"
+          }
+        },
+        {
+          "id": "mc.time-fin.inMin",
+          "from": {
+            "node": "mc",
+            "port": "time"
+          },
+          "to": {
+            "node": "fin",
+            "port": "inMin"
+          }
+        },
+        {
+          "id": "inEnd.out-fin.inMax",
+          "from": {
+            "node": "inEnd",
+            "port": "out"
+          },
+          "to": {
+            "node": "fin",
+            "port": "inMax"
+          }
+        },
+        {
+          "id": "t.out-fout.t",
+          "from": {
+            "node": "t",
+            "port": "out"
+          },
+          "to": {
+            "node": "fout",
+            "port": "t"
+          }
+        },
+        {
+          "id": "outStart.out-fout.inMin",
+          "from": {
+            "node": "outStart",
+            "port": "out"
+          },
+          "to": {
+            "node": "fout",
+            "port": "inMin"
+          }
+        },
+        {
+          "id": "end.out-fout.inMax",
+          "from": {
+            "node": "end",
+            "port": "out"
+          },
+          "to": {
+            "node": "fout",
+            "port": "inMax"
+          }
+        },
+        {
+          "id": "fin.out-both.a",
+          "from": {
+            "node": "fin",
+            "port": "out"
+          },
+          "to": {
+            "node": "both",
+            "port": "a"
+          }
+        },
+        {
+          "id": "fout.out-both.b",
+          "from": {
+            "node": "fout",
+            "port": "out"
+          },
+          "to": {
+            "node": "both",
+            "port": "b"
+          }
+        },
+        {
+          "id": "mc.active-sel.cond",
+          "from": {
+            "node": "mc",
+            "port": "active"
+          },
+          "to": {
+            "node": "sel",
+            "port": "cond"
+          }
+        },
+        {
+          "id": "both.out-sel.a",
+          "from": {
+            "node": "both",
+            "port": "out"
+          },
+          "to": {
+            "node": "sel",
+            "port": "a"
+          }
+        },
+        {
+          "id": "sel.out-out.in",
+          "from": {
+            "node": "sel",
+            "port": "out"
+          },
+          "to": {
+            "node": "out",
+            "port": "in"
+          }
+        }
+      ]
+    }
+  ],
+  "settings": {
+    "aeTarget": 26,
+    "useMatchNames": false,
+    "comments": "minimal",
+    "embedGraph": true
+  }
+}

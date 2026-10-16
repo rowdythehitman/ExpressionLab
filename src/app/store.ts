@@ -143,7 +143,10 @@ function editGraph(recipe: (g: Graph, p: Project) => void, coalesceKey?: string)
 /** A new node instance with sensible default references (first control, first layer, Position). */
 export function newNodeInstance(def: NodeDef | undefined, type: string, id: string, position: { x: number; y: number }, p: Project): NodeInstance {
   const n: NodeInstance = { id, type, position, inputs: {}, params: {} };
-  if (def?.special === 'ref.control' && p.globals.controls[0]) n.ref = { controlId: p.globals.controls[0].id };
+  if (def?.special === 'ref.control') {
+    const c = p.globals.controls.find((x) => !def.controlTypes || def.controlTypes.includes(x.type));
+    if (c) n.ref = { controlId: c.id };
+  }
   if (def?.special === 'ref.layer' && p.globals.layers[0]) n.ref = { layerId: p.globals.layers[0].id };
   if (def?.special === 'ref.property') n.ref = { propertyPath: 'transform.position' };
   return n;

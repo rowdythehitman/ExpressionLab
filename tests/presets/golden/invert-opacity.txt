@@ -1,0 +1,7 @@
+// ExpressionLab · Opacity
+const sourceLayer = thisComp.layer("Source");
+
+// Inverted
+const inverted = linear(sourceLayer.transform.opacity.value, 0, 100, 100, 0);
+
+inverted

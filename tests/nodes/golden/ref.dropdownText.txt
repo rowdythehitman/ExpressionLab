@@ -1,0 +1,7 @@
+// ExpressionLab · Source Text
+const CTRLS = thisComp.layer("CTRLS");
+
+// Style
+const style = CTRLS.effect("Style")("Menu").text;
+
+style

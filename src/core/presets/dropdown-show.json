@@ -1,0 +1,147 @@
+{
+  "version": 1,
+  "globals": {
+    "ctrls": {
+      "layerName": "GLOBALS"
+    },
+    "layers": [],
+    "controls": [
+      {
+        "id": "c-menu",
+        "effectName": "Show Layer",
+        "type": "dropdown",
+        "host": "ctrls",
+        "dropdownItems": [
+          "One",
+          "Two",
+          "Three"
+        ]
+      }
+    ],
+    "comps": []
+  },
+  "graphs": [
+    {
+      "id": "dropdown-show",
+      "name": "Show Layer with Dropdown",
+      "target": {
+        "id": "opacity"
+      },
+      "nodes": [
+        {
+          "id": "menu",
+          "type": "ref.control",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "inputs": {},
+          "params": {},
+          "ref": {
+            "controlId": "c-menu"
+          }
+        },
+        {
+          "id": "num",
+          "type": "layer.nameNumber",
+          "position": {
+            "x": 0,
+            "y": 150
+          },
+          "inputs": {},
+          "params": {},
+          "name": "Layer Number"
+        },
+        {
+          "id": "cmp",
+          "type": "logic.compare",
+          "position": {
+            "x": 250,
+            "y": 50
+          },
+          "inputs": {},
+          "params": {
+            "op": "=="
+          },
+          "name": "Is Selected"
+        },
+        {
+          "id": "sel",
+          "type": "logic.select",
+          "position": {
+            "x": 500,
+            "y": 50
+          },
+          "inputs": {
+            "a": 100,
+            "b": 0
+          },
+          "params": {},
+          "name": "Result"
+        },
+        {
+          "id": "out",
+          "type": "output",
+          "position": {
+            "x": 750,
+            "y": 50
+          },
+          "inputs": {},
+          "params": {}
+        }
+      ],
+      "edges": [
+        {
+          "id": "menu.out-cmp.a",
+          "from": {
+            "node": "menu",
+            "port": "out"
+          },
+          "to": {
+            "node": "cmp",
+            "port": "a"
+          }
+        },
+        {
+          "id": "num.out-cmp.b",
+          "from": {
+            "node": "num",
+            "port": "out"
+          },
+          "to": {
+            "node": "cmp",
+            "port": "b"
+          }
+        },
+        {
+          "id": "cmp.out-sel.cond",
+          "from": {
+            "node": "cmp",
+            "port": "out"
+          },
+          "to": {
+            "node": "sel",
+            "port": "cond"
+          }
+        },
+        {
+          "id": "sel.out-out.in",
+          "from": {
+            "node": "sel",
+            "port": "out"
+          },
+          "to": {
+            "node": "out",
+            "port": "in"
+          }
+        }
+      ]
+    }
+  ],
+  "settings": {
+    "aeTarget": 26,
+    "useMatchNames": false,
+    "comments": "minimal",
+    "embedGraph": true
+  }
+}

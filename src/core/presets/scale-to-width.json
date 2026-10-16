@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "globals": {
+    "ctrls": {
+      "layerName": "GLOBALS"
+    },
+    "layers": [],
+    "controls": [],
+    "comps": []
+  },
+  "graphs": [
+    {
+      "id": "scale-to-width",
+      "name": "Scale Layer to a Width",
+      "target": {
+        "id": "scale2D"
+      },
+      "nodes": [
+        {
+          "id": "x",
+          "type": "xform.scaleToWidth",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "inputs": {
+            "w": 500
+          },
+          "params": {}
+        },
+        {
+          "id": "out",
+          "type": "output",
+          "position": {
+            "x": 320,
+            "y": 0
+          },
+          "inputs": {},
+          "params": {}
+        }
+      ],
+      "edges": [
+        {
+          "id": "x.out-out.in",
+          "from": {
+            "node": "x",
+            "port": "out"
+          },
+          "to": {
+            "node": "out",
+            "port": "in"
+          }
+        }
+      ]
+    }
+  ],
+  "settings": {
+    "aeTarget": 26,
+    "useMatchNames": false,
+    "comments": "minimal",
+    "embedGraph": true
+  }
+}

@@ -108,8 +108,12 @@ export function TopBar({ onPasteImport }: { onPasteImport: () => void }) {
         }}
       >
         <option value="" disabled>Presets…</option>
-        {PRESETS.map((p) => (
-          <option key={p.id} value={p.id}>{p.name}</option>
+        {[...new Set(PRESETS.map((p) => p.group))].map((g) => (
+          <optgroup key={g} label={g}>
+            {PRESETS.filter((p) => p.group === g).map((p) => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </optgroup>
         ))}
       </select>
 

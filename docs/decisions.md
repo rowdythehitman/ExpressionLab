@@ -125,3 +125,29 @@ Choices made where the spec (docs/SPEC.md) said "decide" or was ambiguous. Newes
 47. **Globals are edited in a dialog** opened from the Globals button or any chip. It has a card for the GLOBALS null,
     one for "this layer", and one per layer, each listing its controls with add/rename/retype/move/delete, plus comps.
     Deleting a layer moves its controls onto the GLOBALS null instead of dropping them.
+
+## Phase 3a
+
+48. **New nodes** (all with golden outputs, ES-parse checks and mock-runtime tests):
+    - Ignore Parent Rotation / Scale (optional whole-chain walk; a 0% parent axis is skipped rather than dividing by
+      zero) and Inherit Parent Opacity;
+    - Scale to Width, Max Width Scale and Maintain Stroke Width;
+    - Wiggle Between (`wiggle(f, (max-min)/2, 1) - value + mid`, which fixes the library snippet's undefined
+      `f`/`a` and missing `- value`);
+    - Loop Path Keyframes (cycle via `valueAtTime`, because `loopOut` doesn't work on paths);
+    - Current Marker (time, duration, comment, passed);
+    - Current Date (five formats; render-time date);
+    - AE 26 nodes, gated by Settings › AE version: Previous/Next Keyframe, Previous Marker and Dropdown Text.
+49. **NodeDef extensions:** a statement template may span several lines or render empty (an optional branch).
+    `{{ref.control}}` gives the control's expression inside a template. `controlTypes` limits which controls a
+    `ref.control` node accepts, and filters its picker.
+50. **Presets:** there are now 24, covering the §11 library, in six menu groups. Their metadata (group and AE
+    expectation) lives in `presets/index.ts`, and the files are loaded with `import.meta.glob`.
+51. **Setup script:** `generateSetupScript(project)` emits ES3 ExtendScript, parse-checked with acorn at
+    `ecmaVersion: 3` for every preset. It creates the GLOBALS null and missing null layers, warns about other missing
+    layers instead of guessing their content, and adds every control by effect match name, with dropdown items
+    (`setPropertyParameters`, AE 17.0.1+) and preview values. Controls on "this layer" go on the selected layers.
+    Existing ones are skipped, everything is one undo group, and it ends with a report. Download it from the Globals
+    dialog or the setup checklist.
+52. **Mock runtime** now models AE's property coercion (a property used in arithmetic, or as the final result, gives
+    its value), `toComp` and friends as globals, `previousKey`/`nextKey`, and markers with duration and comment.

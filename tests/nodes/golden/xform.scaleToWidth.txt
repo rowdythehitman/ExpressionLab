@@ -1,7 +1,7 @@
-// ExpressionLab · Rotation
+// ExpressionLab · Scale (2D)
 // Scale to Width
 const scaleToWidth_rw = thisLayer.sourceRectAtTime(time, false).width;
 const scaleToWidth_s = scaleToWidth_rw > 0 ? (100 * 500) / scaleToWidth_rw : 100;
-const scaleToWidth = scaleToWidth_s;
+const scaleToWidth = [scaleToWidth_s, scaleToWidth_s];
 
 scaleToWidth

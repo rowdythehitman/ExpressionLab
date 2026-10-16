@@ -2,6 +2,7 @@
 import { useReactFlow } from '@xyflow/react';
 import { useCallback, useEffect, useState } from 'react';
 import { embedGraph, PAYLOAD_WARN_BYTES, type Diagnostic, type EmbedResult } from '../../core';
+import { downloadSetupScript } from '../persist';
 import { useStore } from '../store';
 import { useCompiled } from '../useCompiled';
 import { CodeView } from './CodeView';
@@ -131,7 +132,16 @@ export function RightPanel() {
       </section>
 
       <section className="panel">
-        <h2>Setup checklist</h2>
+        <div className="panel-head">
+          <h2>Setup checklist</h2>
+          <button
+            className="ghost small"
+            onClick={() => downloadSetupScript(project)}
+            title="Run in AE (File › Scripts › Run Script File…) to create the null, layers and controls"
+          >
+            ⬇ Setup script
+          </button>
+        </div>
         <ul className="checklist">
           {result.checklist.map((c) => (
             <li key={`${graph.id}:${c.id}`}>

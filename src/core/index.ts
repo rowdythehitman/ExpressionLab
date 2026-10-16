@@ -13,3 +13,4 @@ export {
   embedGraph, decodePayload, hasPayload, importGraph, hashBody, globalsSubset,
   PAYLOAD_PREFIX, PAYLOAD_WARN_BYTES, type DecodedPayload, type EmbedResult,
 } from './compiler/embed';
+export { generateSetupScript } from './setup/jsx';

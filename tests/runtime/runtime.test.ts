@@ -189,3 +189,89 @@ describe('text selector nodes', () => {
     expect(run(p, { textIndex: 1, textTotal: 1 })).toBe(0);
   });
 });
+
+describe('Phase 3 nodes', () => {
+  const single = (type: string, target: string, extra: Partial<Parameters<typeof node>[4]> = {}) =>
+    project({
+      nodes: [node('n', type, 0, 0, extra), node('o', 'output', 100)],
+      edges: [edge('n', type === 'marker.current' ? 'duration' : 'out', 'o', 'in')],
+      target: { id: target },
+    });
+
+  it('Wiggle Between stays between min and max', () => {
+    const p = project({
+      nodes: [node('w', 'anim.wiggleRange', 0, 0, { inputs: { min: 20, max: 80 } }), node('o', 'output', 100)],
+      edges: [edge('w', 'out', 'o', 'in')],
+      target: { id: 'opacity' },
+    });
+    for (let t = 0; t < 10; t += 0.37) {
+      const v = run(p, { time: t, value: 5 }) as number;
+      expect(v).toBeGreaterThanOrEqual(20 - 1e-9);
+      expect(v).toBeLessThanOrEqual(80 + 1e-9);
+    }
+  });
+
+  it('Ignore Parent Rotation / Scale cancel the parent, and survive a 0% parent axis', () => {
+    expect(run(single('xform.ignoreParentRotation', 'rotation'), { value: 10, parent: { rotation: 30 } })).toBe(-20);
+    expect(run(single('xform.ignoreParentRotation', 'rotation'), { value: 10 })).toBe(10);
+    expect(run(single('xform.ignoreParentScale', 'scale2D'), { value: [100, 100], parent: { scale: [200, 0] } })).toEqual([50, 100]);
+  });
+
+  it('Inherit Parent Opacity multiplies when keeping its own', () => {
+    expect(run(single('xform.inheritParentOpacity', 'opacity'), { value: 50, parent: { opacity: 50 } })).toBe(25);
+    expect(run(single('xform.inheritParentOpacity', 'opacity', { params: { editable: false } }), { value: 50, parent: { opacity: 40 } })).toBe(40);
+  });
+
+  it('Scale to Width / Max Width Scale use the source rect', () => {
+    const rect = { left: 0, top: 0, width: 1000, height: 100 };
+    expect(run(single('xform.scaleToWidth', 'scale2D'), { value: [100, 100], thisLayer: { rect } })).toEqual([50, 50]);
+    expect(run(single('xform.maxWidthScale', 'scale2D'), { value: [100, 100], thisLayer: { rect } })).toEqual([80, 80]);
+    expect(run(single('xform.maxWidthScale', 'scale2D'), { value: [100, 100], thisLayer: { rect: { ...rect, width: 300 } } })).toEqual([100, 100]);
+  });
+
+  it('Maintain Stroke Width is unchanged without scaling', () => {
+    expect(run(single('xform.maintainStrokeWidth', 'shapeStrokeWidth'), { value: 4 })).toBeCloseTo(4);
+  });
+
+  it('Current Marker reports the passed marker', () => {
+    const markers = [{ time: 1, duration: 2, comment: 'intro' }, { time: 5, duration: 0.5, comment: 'outro' }];
+    const p = single('marker.current', 'opacity');
+    expect(run(p, { time: 0.5, markers })).toBe(0);
+    expect(run(p, { time: 2, markers })).toBe(2);
+    expect(run(p, { time: 6, markers })).toBe(0.5);
+  });
+
+  it('Previous / Next Keyframe (AE 26)', () => {
+    const keys = [{ time: 1, value: 0 }, { time: 3, value: 100 }];
+    const prev = project({
+      nodes: [node('k', 'key.previous'), node('o', 'output', 100)],
+      edges: [edge('k', 'time', 'o', 'in')],
+      target: { id: 'opacity' },
+    });
+    expect(run(prev, { time: 2, keys })).toBe(1);
+    expect(run(prev, { time: 4, keys })).toBe(3);
+    const next = structuredClone(prev);
+    next.graphs[0]!.nodes[0]!.type = 'key.next';
+    expect(run(next, { time: 2, keys })).toBe(3);
+  });
+
+  it('Loop Path Keyframes cycles after the last key', () => {
+    const keys = [{ time: 0, value: 0 }, { time: 2, value: 100 }];
+    const p = project({
+      nodes: [node('l', 'anim.loopPath'), node('o', 'output', 100)],
+      edges: [edge('l', 'out', 'o', 'in')],
+      target: { id: 'opacity' },
+    });
+    expect(run(p, { time: 1, keys })).toBeCloseTo(50);
+    expect(run(p, { time: 3, keys })).toBeCloseTo(50);
+  });
+
+  it('Current Date formats today', () => {
+    const p = project({
+      nodes: [node('d', 'date.format', 0, 0, { params: { format: 'YYYY-MM-DD' } }), node('o', 'output', 100)],
+      edges: [edge('d', 'out', 'o', 'in')],
+      target: { id: 'sourceText' },
+    });
+    expect(run(p)).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+});

@@ -1,4 +1,4 @@
-// ExpressionLab · Rotation
+// ExpressionLab · Scale (2D)
 // Ignore Parent Scale
 let ignoreParentScale_s = value;
 if (hasParent) {

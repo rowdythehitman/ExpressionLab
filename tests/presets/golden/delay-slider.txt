@@ -1,0 +1,12 @@
+// ExpressionLab · Position (2D)
+const GLOBALS = thisComp.layer("GLOBALS");
+const leaderLayer = thisComp.layer("Leader");
+
+// Delay (s)
+const delayS = GLOBALS.effect("Delay (s)")("Slider");
+// Delayed Time
+const delayedTime = time - delayS;
+// Delayed Position
+const delayedPosition = leaderLayer.transform.position.valueAtTime(delayedTime);
+
+delayedPosition

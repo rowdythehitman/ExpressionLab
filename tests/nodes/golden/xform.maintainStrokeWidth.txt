@@ -1,0 +1,6 @@
+// ExpressionLab · Shape Stroke Width
+// Maintain Stroke Width
+const maintainStrokeWidth_d = length(toComp([0, 0]), toComp([0.7071, 0.7071]));
+const maintainStrokeWidth = (maintainStrokeWidth_d > 0 ? value / maintainStrokeWidth_d : value);
+
+maintainStrokeWidth

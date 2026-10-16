@@ -1,0 +1,122 @@
+{
+  "version": 1,
+  "globals": {
+    "ctrls": {
+      "layerName": "GLOBALS"
+    },
+    "layers": [
+      {
+        "id": "l-null",
+        "key": "nullLayer",
+        "layerName": "3D Null",
+        "is3D": true,
+        "kind": "null"
+      }
+    ],
+    "controls": [],
+    "comps": []
+  },
+  "graphs": [
+    {
+      "id": "null-2d-to-3d",
+      "name": "2D Layer Follows 3D Null",
+      "target": {
+        "id": "position2D"
+      },
+      "nodes": [
+        {
+          "id": "null",
+          "type": "ref.layer",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "inputs": {},
+          "params": {},
+          "ref": {
+            "layerId": "l-null"
+          }
+        },
+        {
+          "id": "tc",
+          "type": "space.toComp",
+          "position": {
+            "x": 250,
+            "y": 0
+          },
+          "inputs": {
+            "p": [
+              0,
+              0,
+              0
+            ]
+          },
+          "params": {},
+          "name": "Null In Comp"
+        },
+        {
+          "id": "drop",
+          "type": "vec.dropZ",
+          "position": {
+            "x": 500,
+            "y": 0
+          },
+          "inputs": {},
+          "params": {},
+          "name": "Screen Position"
+        },
+        {
+          "id": "out",
+          "type": "output",
+          "position": {
+            "x": 750,
+            "y": 0
+          },
+          "inputs": {},
+          "params": {}
+        }
+      ],
+      "edges": [
+        {
+          "id": "null.out-tc.layer",
+          "from": {
+            "node": "null",
+            "port": "out"
+          },
+          "to": {
+            "node": "tc",
+            "port": "layer"
+          }
+        },
+        {
+          "id": "tc.out-drop.v",
+          "from": {
+            "node": "tc",
+            "port": "out"
+          },
+          "to": {
+            "node": "drop",
+            "port": "v"
+          }
+        },
+        {
+          "id": "drop.out-out.in",
+          "from": {
+            "node": "drop",
+            "port": "out"
+          },
+          "to": {
+            "node": "out",
+            "port": "in"
+          }
+        }
+      ]
+    }
+  ],
+  "settings": {
+    "aeTarget": 26,
+    "useMatchNames": false,
+    "comments": "minimal",
+    "embedGraph": true
+  }
+}

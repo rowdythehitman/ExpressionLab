@@ -54,7 +54,9 @@ function AeNodeImpl({ id, data, selected }: NodeProps<RFNode<AeNodeData>>) {
           onChange={(e) => actions.setRef(id, { controlId: e.target.value })}
         >
           <option value="" disabled>Pick a control…</option>
-          {globals.controls.map((c) => <option key={c.id} value={c.id}>{c.effectName} ({CONTROLS[c.type].label})</option>)}
+          {globals.controls
+            .filter((c) => !def.controlTypes || def.controlTypes.includes(c.type))
+            .map((c) => <option key={c.id} value={c.id}>{c.effectName} ({CONTROLS[c.type].label})</option>)}
         </select>
       )}
       {def.special === 'ref.layer' && (

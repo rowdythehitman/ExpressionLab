@@ -1,0 +1,124 @@
+{
+  "version": 1,
+  "globals": {
+    "ctrls": {
+      "layerName": "GLOBALS"
+    },
+    "layers": [
+      {
+        "id": "l-src",
+        "key": "sourceLayer",
+        "layerName": "Source",
+        "is3D": false,
+        "kind": "other"
+      }
+    ],
+    "controls": [],
+    "comps": []
+  },
+  "graphs": [
+    {
+      "id": "invert-opacity",
+      "name": "Invert Opacity of Another Layer",
+      "target": {
+        "id": "opacity"
+      },
+      "nodes": [
+        {
+          "id": "src",
+          "type": "ref.layer",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "inputs": {},
+          "params": {},
+          "ref": {
+            "layerId": "l-src"
+          }
+        },
+        {
+          "id": "prop",
+          "type": "ref.property",
+          "position": {
+            "x": 250,
+            "y": 0
+          },
+          "inputs": {},
+          "params": {},
+          "ref": {
+            "propertyPath": "transform.opacity"
+          },
+          "name": "Source Opacity"
+        },
+        {
+          "id": "flip",
+          "type": "math.remap",
+          "position": {
+            "x": 500,
+            "y": 0
+          },
+          "inputs": {
+            "inMin": 0,
+            "inMax": 100,
+            "outMin": 100,
+            "outMax": 0
+          },
+          "params": {},
+          "name": "Inverted"
+        },
+        {
+          "id": "out",
+          "type": "output",
+          "position": {
+            "x": 750,
+            "y": 0
+          },
+          "inputs": {},
+          "params": {}
+        }
+      ],
+      "edges": [
+        {
+          "id": "src.out-prop.layer",
+          "from": {
+            "node": "src",
+            "port": "out"
+          },
+          "to": {
+            "node": "prop",
+            "port": "layer"
+          }
+        },
+        {
+          "id": "prop.value-flip.t",
+          "from": {
+            "node": "prop",
+            "port": "value"
+          },
+          "to": {
+            "node": "flip",
+            "port": "t"
+          }
+        },
+        {
+          "id": "flip.out-out.in",
+          "from": {
+            "node": "flip",
+            "port": "out"
+          },
+          "to": {
+            "node": "out",
+            "port": "in"
+          }
+        }
+      ]
+    }
+  ],
+  "settings": {
+    "aeTarget": 26,
+    "useMatchNames": false,
+    "comments": "minimal",
+    "embedGraph": true
+  }
+}

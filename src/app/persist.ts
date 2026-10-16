@@ -1,5 +1,5 @@
 // Autosave to IndexedDB, and .aenodes.json import/export (spec §12 Persistence).
-import { projectSchema, type Project } from '../core';
+import { generateSetupScript, projectSchema, type Project } from '../core';
 import { useStore } from './store';
 
 const DB = 'expressionlab';
@@ -51,6 +51,20 @@ export async function startAutosave(): Promise<void> {
     clearTimeout(timer);
     timer = setTimeout(() => void idbSet(KEY, s.project).catch(() => {}), 400);
   });
+}
+
+/** Saves `text` as a file download. */
+export function downloadText(filename: string, text: string, type = 'text/plain'): void {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type }));
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+/** Downloads the .jsx that creates this project's GLOBALS null, layers and controls in AE. */
+export function downloadSetupScript(project: Project): void {
+  downloadText('expressionlab-setup.jsx', generateSetupScript(project), 'application/javascript');
 }
 
 export function exportProject(project: Project): void {
