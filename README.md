@@ -14,11 +14,17 @@ clean, readable AE expression that you paste into After Effects. Fully client-si
 
 - **Editor:** a node canvas (React Flow) with typed ports. Each port type has its own colour and shape, and unconnected
   inputs get inline widgets. A wrong-type connection is refused with the reason and a one-click converter quick-fix.
-  Press `Tab` or double-click the canvas to quick-add a node.
+  Press `Tab` or double-click the canvas to quick-add a node, or drop a wire on empty canvas to add a node that's
+  already connected. Copy, cut, paste and duplicate nodes (`Ctrl/Cmd+C/X/V/D`), including between tabs and windows.
+- **Inspector:** variable name (showing the identifier actually emitted), node colour, every input and setting, and
+  "Add to Previewer".
 - **Globals strip:** the pinned CTRLS layer plus layers, controls and comps. Rename once and every expression updates.
 - **Expressions:** each one has its own tab and target (with a 3D toggle). Edges that no longer fit after a target change
   stay in place, shown in red.
 - **Output panel:**
+  - **Preview** view: runs the expression live (sandboxed mock AE runtime) with a time scrubber and play button, the
+    property value, a curve of the output over time, and the nodes you added to the previewer (live values, control
+    preview values, overrides);
   - live code, linked both ways to the canvas: select a node to highlight its lines, click a line to select its node;
   - Copy (with the embedded graph) and Copy clean;
   - clickable diagnostics and the setup checklist.

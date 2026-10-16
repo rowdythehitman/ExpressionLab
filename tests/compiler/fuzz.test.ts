@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { analyzeGraph, checkConnection, compile, NODE_DEFS, type Project } from '../../src/core';
 import { assertParses, edge, node, TARGET_FOR } from '../helpers';
-import { evaluate, type MockContext } from '../runtime/mockAE';
+import { evaluate, type MockContext } from '../../src/core/runtime/mockAE.js';
 
 function rng(seed: number) {
   return () => {

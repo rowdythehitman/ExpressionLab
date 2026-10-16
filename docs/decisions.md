@@ -89,3 +89,26 @@ Choices made where the spec (docs/SPEC.md) said "decide" or was ambiguous. Newes
     preinstalled Chromium. In CI, the e2e job installs the Playwright browser.
 36. **UI labels:** "Import/Export" became "Open/Save" (project files), with a separate "Paste expression" for
     paste-back. Pasting an ExpressionLab expression anywhere outside a text field also offers to import it.
+
+## Feedback round 1 (UX + Output Preview)
+
+37. **Clipboard:** nodes are copied as JSON on the system clipboard (`expressionlab/nodes@1`), so copy and paste work
+    across tabs and windows. The clip carries the controls and layers its nodes reference, merged by id on paste (the
+    project's existing definitions win). Output is never copied. Paste lands at the mouse when it's over the canvas;
+    `Ctrl/Cmd+D` duplicates with a 40px offset. Text fields, the code view and dialogs keep normal text copy and paste.
+38. **Multi-selection:** the store keeps `selection` (ordered). The last-selected node is the inspector's. Shift-drag
+    box-selects; Shift or Ctrl/Cmd-click adds to the selection.
+39. **Wire-drop quick-add** lists only nodes that can take the wire. It uses the real connection check, so generics
+    and the vecN × number rule apply. The node is created and wired in one undo step.
+40. **Node colour and previewer flag** are optional `NodeInstance` fields (`color`, `preview`). Old files stay valid.
+    The inspector's "Variable name" shows the identifier actually emitted (from `CompileResult.variables`).
+41. **Output Preview** compiles a separate, instrumented copy of the expression. `__probe` lines report tagged nodes and
+    `__in` substitutes overridden outputs. The copied code is never instrumented. `time` and `value` are driven by the
+    preview's scrubber and value field. Controls use a new optional `ControlGlobal.previewValue`, defaulting per type.
+42. **Preview sandbox:** previewed code (which can include raw code from a pasted expression) runs in an
+    `<iframe sandbox="allow-scripts">` with a CSP that blocks all network access. It has an opaque origin, so it can't
+    read this page's IndexedDB projects. The runtime is `src/core/runtime/mockAE.js` (plain JS, shared with the tests),
+    loaded into the iframe as text. Each evaluation times out after 3s.
+43. **Curve chart:** the series colours (x/y/z/w) were checked with the dataviz palette validator against the dark
+    surface, and all checks pass. Lines are 2px, with a legend plus direct labels and a hover crosshair and tooltip.
+    Click or drag on the chart to scrub.

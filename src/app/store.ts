@@ -1,8 +1,9 @@
 // App state: the project, undo/redo history (graph and globals share one history), UI selection.
 import { produce } from 'immer';
 import { create } from 'zustand';
-import type { ConverterFix, DecodedPayload, Graph, Literal, NodeInstance, Project } from '../core';
+import type { ConverterFix, DecodedPayload, Graph, Literal, NodeDef, NodeInstance, Project } from '../core';
 import { importGraph, NODE_DEFS } from '../core';
+import { copyNodes, pasteNodes, type NodeClip } from './clipboard';
 import { PRESETS } from '../core/presets';
 
 const HISTORY_LIMIT = 200;
@@ -23,7 +24,10 @@ interface State {
   future: Project[];
   lastKey: string | null;
   lastAt: number;
+  /** The primary (last-selected) node, shown in the inspector. */
   selectedNodeId: string | null;
+  /** Every selected node (box-select / Shift-click). */
+  selection: string[];
   connectError: ConnectError | null;
 
   /** Apply an undoable change. */
@@ -33,6 +37,7 @@ interface State {
   undo(): void;
   redo(): void;
   select(id: string | null): void;
+  setSelection(ids: string[]): void;
   setConnectError(e: ConnectError | null): void;
   setGraph(id: string): void;
 }
@@ -47,6 +52,7 @@ export const useStore = create<State>((set, get) => ({
   lastKey: null,
   lastAt: 0,
   selectedNodeId: null,
+  selection: [],
   connectError: null,
 
   update(recipe, coalesceKey) {
@@ -73,6 +79,7 @@ export const useStore = create<State>((set, get) => ({
       future: [],
       lastKey: null,
       selectedNodeId: null,
+      selection: [],
       connectError: null,
     });
   },
@@ -103,9 +110,10 @@ export const useStore = create<State>((set, get) => ({
     });
   },
 
-  select: (id) => set({ selectedNodeId: id }),
+  select: (id) => set({ selectedNodeId: id, selection: id ? [id] : [] }),
+  setSelection: (ids) => set({ selection: ids, selectedNodeId: ids.at(-1) ?? null }),
   setConnectError: (e) => set({ connectError: e }),
-  setGraph: (id) => set({ graphId: id, selectedNodeId: null, connectError: null }),
+  setGraph: (id) => set({ graphId: id, selectedNodeId: null, selection: [], connectError: null }),
 }));
 
 // ---- Selectors / helpers ----
@@ -129,16 +137,42 @@ function editGraph(recipe: (g: Graph, p: Project) => void, coalesceKey?: string)
   update((p) => recipe(activeGraph(p, graphId), p), coalesceKey);
 }
 
+/** A new node instance with sensible default references (first control, first layer, Position). */
+export function newNodeInstance(def: NodeDef | undefined, type: string, id: string, position: { x: number; y: number }, p: Project): NodeInstance {
+  const n: NodeInstance = { id, type, position, inputs: {}, params: {} };
+  if (def?.special === 'ref.control' && p.globals.controls[0]) n.ref = { controlId: p.globals.controls[0].id };
+  if (def?.special === 'ref.layer' && p.globals.layers[0]) n.ref = { layerId: p.globals.layers[0].id };
+  if (def?.special === 'ref.property') n.ref = { propertyPath: 'transform.position' };
+  return n;
+}
+
+export interface PendingWire {
+  /** The node and handle the wire was dragged from. */
+  node: string;
+  port: string;
+  /** 'source' = dragged from an output; 'target' = dragged from an input. */
+  side: 'source' | 'target';
+}
+
 export const actions = {
   addNode(type: string, position: { x: number; y: number }): string {
     const id = newId('n');
-    const def = NODE_DEFS.get(type);
     editGraph((g, p) => {
-      const n: NodeInstance = { id, type, position, inputs: {}, params: {} };
-      if (def?.special === 'ref.control' && p.globals.controls[0]) n.ref = { controlId: p.globals.controls[0].id };
-      if (def?.special === 'ref.layer' && p.globals.layers[0]) n.ref = { layerId: p.globals.layers[0].id };
-      if (def?.special === 'ref.property') n.ref = { propertyPath: 'transform.position' };
-      g.nodes.push(n);
+      g.nodes.push(newNodeInstance(NODE_DEFS.get(type), type, id, position, p));
+    });
+    useStore.getState().select(id);
+    return id;
+  },
+
+  /** Adds a node and wires it to a dangling connection in one undo step (drag a wire into empty canvas). */
+  addNodeWired(type: string, position: { x: number; y: number }, wire: PendingWire, port: string): string {
+    const id = newId('n');
+    editGraph((g, p) => {
+      g.nodes.push(newNodeInstance(NODE_DEFS.get(type), type, id, position, p));
+      const from = wire.side === 'source' ? { node: wire.node, port: wire.port } : { node: id, port };
+      const to = wire.side === 'source' ? { node: id, port } : { node: wire.node, port: wire.port };
+      g.edges = g.edges.filter((e) => !(e.to.node === to.node && e.to.port === to.port));
+      g.edges.push({ id: newId('e'), from, to });
     });
     useStore.getState().select(id);
     return id;
@@ -150,8 +184,46 @@ export const actions = {
       g.nodes = g.nodes.filter((n) => !set.has(n.id));
       g.edges = g.edges.filter((e) => !set.has(e.from.node) && !set.has(e.to.node));
     });
-    const sel = useStore.getState().selectedNodeId;
-    if (sel && set.has(sel)) useStore.getState().select(null);
+    const { selection, setSelection } = useStore.getState();
+    setSelection(selection.filter((id) => !set.has(id)));
+  },
+
+  /** The current selection as a clip (Output is never copied). */
+  copySelection(): NodeClip | null {
+    const { project, graphId, selection } = useStore.getState();
+    return copyNodes(project, activeGraph(project, graphId), selection);
+  },
+
+  paste(clip: NodeClip, at?: { x: number; y: number }) {
+    let ids: string[] = [];
+    const { update, graphId } = useStore.getState();
+    update((p) => {
+      ids = pasteNodes(p, graphId, clip, newId, at);
+    });
+    useStore.getState().setSelection(ids);
+  },
+
+  duplicateSelection() {
+    const clip = actions.copySelection();
+    if (clip) actions.paste(clip);
+  },
+
+  setNodeColor(nodeId: string, color: string | undefined) {
+    editGraph((g) => {
+      const n = g.nodes.find((x) => x.id === nodeId);
+      if (!n) return;
+      if (color) n.color = color;
+      else delete n.color;
+    }, `color:${nodeId}`);
+  },
+
+  setPreview(nodeId: string, on: boolean) {
+    editGraph((g) => {
+      const n = g.nodes.find((x) => x.id === nodeId);
+      if (!n) return;
+      if (on) n.preview = true;
+      else delete n.preview;
+    });
   },
 
   moveNode(id: string, position: { x: number; y: number }) {

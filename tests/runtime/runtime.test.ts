@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { compile, type Project } from '../../src/core';
 import { PRESETS } from '../../src/core/presets';
 import { edge, node, project } from '../helpers';
-import { evaluate, type MockContext } from './mockAE';
+import { evaluate, type MockContext } from '../../src/core/runtime/mockAE.js';
 
 const preset = (id: string) => structuredClone(PRESETS.find((p) => p.id === id)!.project);
 const run = (p: Project, ctx: MockContext = {}, graphId = p.graphs[0]!.id) => {

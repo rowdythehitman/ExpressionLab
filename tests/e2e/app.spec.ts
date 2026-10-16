@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
 const code = (page: Page) => page.locator('.cm-content');
+const graphTabs = (page: Page) => page.getByRole('tablist', { name: 'Expressions' });
 
 async function paste(page: Page, text: string) {
   await page.evaluate((t) => {
@@ -31,13 +32,13 @@ test('paste-back imports the graph as a new tab, warning about hand edits', asyn
   const clip = await page.evaluate(() => navigator.clipboard.readText());
 
   await paste(page, clip);
-  await expect(page.getByRole('tab')).toHaveCount(2);
-  await expect(page.getByRole('tab', { selected: true })).toHaveText('Posterize Time + Wiggle (imported)');
+  await expect(graphTabs(page).getByRole('tab')).toHaveCount(2);
+  await expect(graphTabs(page).getByRole('tab', { selected: true })).toHaveText('Posterize Time + Wiggle (imported)');
 
   await paste(page, clip.replace('1, 0.5)', '3, 0.5)'));
   await expect(page.getByRole('dialog')).toContainText('edited by hand');
   await page.getByRole('button', { name: 'Load graph anyway' }).click();
-  await expect(page.getByRole('tab')).toHaveCount(3);
+  await expect(graphTabs(page).getByRole('tab')).toHaveCount(3);
 
   await page.getByRole('button', { name: 'Paste expression' }).click();
   await page.getByRole('dialog').locator('textarea').fill('wiggle(2, 50)');
@@ -77,22 +78,22 @@ test('source map links nodes and code lines both ways', async ({ page }) => {
   await expect(page.locator('.cm-node-hl').first()).toContainText('// Wiggle');
 
   await page.locator('.cm-line', { hasText: 'const wiggleAmp' }).click();
-  await expect(page.locator('.inspector h2')).toHaveText('Control');
+  await expect(page.locator('.inspector h2')).toHaveText(/^Control/);
   await expect(page.locator('.cm-node-hl').last()).toContainText('const wiggleAmp');
 });
 
 test('graph tabs: add, switch, delete, undo', async ({ page }) => {
   await page.getByRole('button', { name: 'New expression' }).click();
-  await expect(page.getByRole('tab')).toHaveCount(2);
+  await expect(graphTabs(page).getByRole('tab')).toHaveCount(2);
   await expect(code(page)).toHaveText(/value$/);
-  await page.getByRole('tab', { name: 'Posterize Time + Wiggle' }).click();
+  await graphTabs(page).getByRole('tab', { name: 'Posterize Time + Wiggle' }).click();
   await expect(code(page)).toContainText('wiggle1');
-  await page.getByRole('tab', { name: 'Expression 2' }).click();
+  await graphTabs(page).getByRole('tab', { name: 'Expression 2' }).click();
   await page.getByRole('button', { name: 'Delete expression' }).click();
-  await expect(page.getByRole('tab')).toHaveCount(1);
+  await expect(graphTabs(page).getByRole('tab')).toHaveCount(1);
   await page.locator('.react-flow__pane').click({ position: { x: 20, y: 20 } });
   await page.keyboard.press('Control+z');
-  await expect(page.getByRole('tab')).toHaveCount(2);
+  await expect(graphTabs(page).getByRole('tab')).toHaveCount(2);
 });
 
 test('inlining setting folds single-use values', async ({ page }) => {

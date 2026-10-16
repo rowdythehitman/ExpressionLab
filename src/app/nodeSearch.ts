@@ -1,6 +1,7 @@
 // Shared by the palette and the quick-add popover.
-import { NODE_DEFS, TARGETS, type Graph, type NodeDef } from '../core';
+import { checkConnection, NODE_DEFS, TARGETS, type Graph, type NodeDef, type Project } from '../core';
 import { CATEGORY_ORDER } from './components/ports';
+import { newNodeInstance, type PendingWire } from './store';
 
 export function disabledReason(d: NodeDef, graph: Graph, aeTarget: number): string | null {
   const target = TARGETS.get(graph.target.id);
@@ -28,4 +29,20 @@ export function searchDefs(q: string): NodeDef[] {
     : d.description.toLowerCase().includes(needle) ? 3
     : -1;
   return all.filter((d) => score(d) >= 0).sort((a, b) => score(a) - score(b));
+}
+
+/**
+ * For a wire dragged into empty canvas: the first port of `def` that the wire could connect to
+ * (an input when dragging from an output, an output when dragging from an input), or null.
+ */
+export function compatiblePort(project: Project, graph: Graph, def: NodeDef, wire: PendingWire): string | null {
+  const temp = newNodeInstance(def, def.id, '__quickadd__', { x: 0, y: 0 }, project);
+  const trial: Graph = { ...graph, nodes: [...graph.nodes, temp] };
+  const ports = wire.side === 'source' ? def.inputs.map((p) => p.id) : def.outputs.map((o) => o.id);
+  for (const port of ports) {
+    const from = wire.side === 'source' ? { node: wire.node, port: wire.port } : { node: temp.id, port };
+    const to = wire.side === 'source' ? { node: temp.id, port } : { node: wire.node, port: wire.port };
+    if (checkConnection(project, trial, from, to).ok) return port;
+  }
+  return null;
 }

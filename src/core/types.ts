@@ -91,6 +91,10 @@ export interface NodeInstance {
   inputs: Record<string, Literal>;
   params: Record<string, Literal>;
   ref?: { controlId?: string; layerId?: string; propertyPath?: string };
+  /** Header colour on the canvas (CSS colour); default is the category colour. */
+  color?: string;
+  /** Shown in the Output Preview panel. */
+  preview?: boolean;
 }
 
 export interface Edge {
@@ -135,6 +139,8 @@ export interface ControlGlobal {
   type: ControlType;
   host: ControlHost;
   dropdownItems?: string[];
+  /** Value the Output Preview uses for this control. */
+  previewValue?: number | number[];
 }
 
 export interface Globals {
@@ -213,4 +219,6 @@ export interface CompileResult {
   diagnostics: Diagnostic[];
   checklist: ChecklistItem[];
   sourceMap: SourceMap;
+  /** nodeId → the variable names emitted for it (empty when inlined). */
+  variables: Record<string, string[]>;
 }
