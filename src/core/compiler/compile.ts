@@ -17,15 +17,22 @@ export const APP_NAME = 'ExpressionLab';
 export interface CompileOptions {
   /** Override the node library (tests, user-defined nodes later). */
   nodeDefs?: ReadonlyMap<string, NodeDef>;
+  /**
+   * Output Preview instrumentation (never used for the copied code):
+   * - overrides: "nodeId:port" outputs replaced by `__in("nodeId:port")`
+   * - probes: node ids whose outputs are reported via `__probe("nodeId:port", value)` before the result
+   */
+  preview?: { overrides?: ReadonlySet<string>; probes?: ReadonlySet<string> };
 }
 
 export function compile(input: Project | unknown, graphId: string, opts: CompileOptions = {}): CompileResult {
   const diag = new DiagnosticBag();
-  const result = (code = '', sourceMap: SourceMap = {}): CompileResult => ({
+  const result = (code = '', sourceMap: SourceMap = {}, variables: Record<string, string[]> = {}): CompileResult => ({
     code: diag.hasErrors ? '' : code,
     diagnostics: diag.items,
     checklist: diag.checklist,
     sourceMap: diag.hasErrors ? {} : sourceMap,
+    variables: diag.hasErrors ? {} : variables,
   });
 
   // ---- 1. Validate structure ----
@@ -308,6 +315,8 @@ export function compile(input: Project | unknown, graphId: string, opts: Compile
   };
   const renderOutput = (n: NodeInstance, port: string): string => {
     const d = def(n);
+    const key = `${n.id}:${port}`;
+    if (opts.preview?.overrides?.has(key)) return `__in(${JSON.stringify(key)})`;
     if (d.special === 'ref.control') return controlExpr(controlFor(n)!, ctrlsVar, layerVars, project.settings);
     if (d.special === 'ref.layer') return layerVars.get(n.ref!.layerId!)!;
     const o = d.outputs.find((x) => x.id === port)!;
@@ -336,6 +345,16 @@ export function compile(input: Project | unknown, graphId: string, opts: Compile
   restSection.forEach(emitNode);
   if (restSection.some((n) => !isInline(n))) lines.push('');
 
+  // Preview probes: report each probed node's outputs just before the result.
+  for (const id of opts.preview?.probes ?? []) {
+    const n = nodeById.get(id);
+    if (!n || !reached.has(id) || def(n).special === 'output') continue;
+    for (const o of def(n).outputs) {
+      const v = varNames.get(id)?.get(o.id) ?? renderOutput(n, o.id);
+      lines.push(`__probe(${JSON.stringify(`${id}:${o.id}`)}, ${v});`);
+    }
+  }
+
   const final = edgeInto(outputNode, 'in');
   lines.push(final ? exprOf(final.from.node, final.from.port) : '');
   sourceMap[outputNode.id] = [lines.length, lines.length];
@@ -346,7 +365,9 @@ export function compile(input: Project | unknown, graphId: string, opts: Compile
     if (c) sourceMap[id] = sourceMap[c]!;
   }
 
-  return result(lines.join('\n'), sourceMap);
+  const variables: Record<string, string[]> = {};
+  for (const n of live) variables[n.id] = [...(varNames.get(n.id)?.values() ?? [])];
+  return result(lines.join('\n'), sourceMap, variables);
 }
 
 /** Nodes whose expression is substituted directly where used instead of getting a `const`. */

@@ -82,6 +82,8 @@ export const nodeInstanceSchema = z.object({
   ref: z
     .object({ controlId: z.string().optional(), layerId: z.string().optional(), propertyPath: z.string().optional() })
     .optional(),
+  color: z.string().max(64).optional(),
+  preview: z.boolean().optional(),
 });
 
 const endpoint = z.object({ node: z.string(), port: z.string() });
@@ -113,6 +115,7 @@ export const globalsSchema = z.object({
       type: z.enum(['slider', 'checkbox', 'dropdown', 'color', 'point', 'point3d', 'angle', 'layer']),
       host: z.union([z.literal('ctrls'), z.literal('thisLayer'), z.object({ layerId: z.string() })]),
       dropdownItems: z.array(z.string()).optional(),
+      previewValue: z.union([z.number(), z.array(z.number())]).optional(),
     }),
   ),
   comps: z.array(z.object({ id: z.string().min(1), name: z.string() })),

@@ -2,10 +2,11 @@
 // local node state only for in-progress drags and measured sizes.
 import {
   applyNodeChanges, Background, Controls, MiniMap, ReactFlow, useReactFlow,
-  type Connection, type Edge as RFEdge, type EdgeChange, type Node as RFNode, type NodeChange,
+  type Connection, type Edge as RFEdge, type EdgeChange, type FinalConnectionState, type Node as RFNode, type NodeChange,
 } from '@xyflow/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { checkConnection, type NodeTypes } from '../../core';
+import { parseClip } from '../clipboard';
 import { actions, useStore } from '../store';
 import { useCompiled } from '../useCompiled';
 import { AeNode, type AeNodeData } from './AeNode';
@@ -17,16 +18,67 @@ const nodeTypes = { ae: AeNode };
 export function Canvas() {
   const { graph, result, analysis } = useCompiled();
   const project = useStore((s) => s.project);
-  const selectedNodeId = useStore((s) => s.selectedNodeId);
+  const selection = useStore((s) => s.selection);
   const connectError = useStore((s) => s.connectError);
   const rf = useReactFlow();
   const wrapper = useRef<HTMLDivElement>(null);
   const mouse = useRef<{ x: number; y: number } | null>(null);
   const [quickAdd, setQuickAdd] = useState<QuickAddAt | null>(null);
 
-  const openQuickAdd = useCallback((clientX: number, clientY: number) => {
+  const openQuickAdd = useCallback((clientX: number, clientY: number, wire?: QuickAddAt['wire']) => {
     const r = wrapper.current!.getBoundingClientRect();
-    setQuickAdd({ x: clientX - r.left, y: clientY - r.top, flow: rf.screenToFlowPosition({ x: clientX, y: clientY }) });
+    setQuickAdd({ x: clientX - r.left, y: clientY - r.top, flow: rf.screenToFlowPosition({ x: clientX, y: clientY }), wire });
+  }, [rf]);
+
+  // Copy / cut / paste / duplicate / select-all for nodes. Text fields and the code view keep their
+  // normal clipboard behaviour; the node clip goes through the system clipboard as JSON.
+  useEffect(() => {
+    const inTextContext = (t: EventTarget | null) => {
+      const el = t as HTMLElement | null;
+      if (!el) return false;
+      if (el.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName) || el.closest('.cm-editor, [role=dialog]')) return true;
+      return !!window.getSelection()?.toString();
+    };
+    const onCopy = (e: ClipboardEvent, cut: boolean) => {
+      if (inTextContext(e.target) || !useStore.getState().selection.length) return;
+      const clip = actions.copySelection();
+      if (!clip) return;
+      e.preventDefault();
+      e.clipboardData?.setData('text/plain', JSON.stringify(clip));
+      if (cut) actions.removeNodes(clip.nodes.map((n) => n.id));
+    };
+    const copy = (e: ClipboardEvent) => onCopy(e, false);
+    const cut = (e: ClipboardEvent) => onCopy(e, true);
+    const paste = (e: ClipboardEvent) => {
+      if (inTextContext(e.target)) return;
+      const clip = parseClip(e.clipboardData?.getData('text/plain') ?? '');
+      if (!clip) return;
+      e.preventDefault();
+      const m = mouse.current;
+      actions.paste(clip, m ? rf.screenToFlowPosition(m) : undefined);
+    };
+    const keys = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey) || e.shiftKey || inTextContext(e.target)) return;
+      const k = e.key.toLowerCase();
+      if (k === 'd') {
+        e.preventDefault();
+        actions.duplicateSelection();
+      } else if (k === 'a') {
+        e.preventDefault();
+        const { project: p, graphId, setSelection } = useStore.getState();
+        setSelection((p.graphs.find((g) => g.id === graphId) ?? p.graphs[0]!).nodes.map((n) => n.id));
+      }
+    };
+    window.addEventListener('copy', copy);
+    window.addEventListener('cut', cut);
+    window.addEventListener('paste', paste);
+    window.addEventListener('keydown', keys);
+    return () => {
+      window.removeEventListener('copy', copy);
+      window.removeEventListener('cut', cut);
+      window.removeEventListener('paste', paste);
+      window.removeEventListener('keydown', keys);
+    };
   }, [rf]);
 
   // Tab opens quick-add at the cursor (or the canvas centre) when focus isn't in a field or dialog.
@@ -67,14 +119,14 @@ export function Canvas() {
       id: n.id,
       type: 'ae',
       position: n.position,
-      selected: n.id === selectedNodeId,
+      selected: selection.includes(n.id),
       data: {
         types: analysis.types.get(n.id) as NodeTypes | undefined,
         connected: connected.get(n.id) ?? [],
         status: status.get(n.id) ?? 'ok',
       },
     }));
-  }, [graph, analysis, status, selectedNodeId]);
+  }, [graph, analysis, status, selection]);
 
   const [nodes, setNodes] = useState(derived);
   const [prevDerived, setPrevDerived] = useState(derived);
@@ -102,11 +154,18 @@ export function Canvas() {
   const onNodesChange = useCallback((changes: NodeChange<RFNode<AeNodeData>>[]) => {
     setNodes((nds) => applyNodeChanges(changes, nds));
     const removed: string[] = [];
+    const { selection: current, setSelection } = useStore.getState();
+    let next = current;
     for (const c of changes) {
       if (c.type === 'position' && c.position && !c.dragging) actions.moveNode(c.id, c.position);
       if (c.type === 'remove') removed.push(c.id);
-      if (c.type === 'select' && c.selected) useStore.getState().select(c.id);
+      if (c.type === 'select') {
+        // Keep selection order: the most recently selected node is the inspector's.
+        next = next.filter((id) => id !== c.id);
+        if (c.selected) next = [...next, c.id];
+      }
     }
+    if (next !== current) setSelection(next);
     if (removed.length) actions.removeNodes(removed);
   }, []);
 
@@ -129,6 +188,17 @@ export function Canvas() {
       useStore.getState().setConnectError({ reason: check.reason, fix: check.fix, from, to });
     }
   }, []);
+
+  // A wire dropped on empty canvas opens quick-add listing only nodes that can take it.
+  const onConnectEnd = useCallback((e: MouseEvent | TouchEvent, state: FinalConnectionState) => {
+    if (state.toHandle || !state.fromHandle?.id || !state.fromNode) return;
+    const point = 'changedTouches' in e ? e.changedTouches[0]! : e;
+    openQuickAdd(point.clientX, point.clientY, {
+      node: state.fromNode.id,
+      port: state.fromHandle.id,
+      side: state.fromHandle.type,
+    });
+  }, [openQuickAdd]);
 
   const onDrop = useCallback((e: React.DragEvent) => {
     const type = e.dataTransfer.getData(DRAG_MIME);
@@ -157,8 +227,10 @@ export function Canvas() {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onConnectEnd={onConnectEnd}
         onPaneClick={() => useStore.getState().select(null)}
         deleteKeyCode={['Backspace', 'Delete']}
+        multiSelectionKeyCode={['Shift', 'Meta', 'Control']}
         zoomOnDoubleClick={false}
         colorMode="dark"
         fitView
@@ -179,7 +251,7 @@ export function Canvas() {
           <button className="ghost small" aria-label="Dismiss" onClick={() => useStore.getState().setConnectError(null)}>×</button>
         </div>
       )}
-      {quickAdd && <QuickAdd at={quickAdd} onClose={() => setQuickAdd(null)} />}
+      {quickAdd && <QuickAdd key={`${quickAdd.x},${quickAdd.y}`} at={quickAdd} onClose={() => setQuickAdd(null)} />}
       {project.graphs.length > 0 && graph.nodes.length === 0 && (
         <div className="canvas-empty muted">Add nodes from the palette (or press Tab / double-click here), then wire them into an Output.</div>
       )}

@@ -1,10 +1,12 @@
 // Inspector + output pane, diagnostics and setup checklist (spec §12).
 import { useReactFlow } from '@xyflow/react';
 import { useCallback, useEffect, useState } from 'react';
-import { embedGraph, NODE_DEFS, PAYLOAD_WARN_BYTES, type Diagnostic, type EmbedResult } from '../../core';
-import { actions, useStore } from '../store';
+import { embedGraph, PAYLOAD_WARN_BYTES, type Diagnostic, type EmbedResult } from '../../core';
+import { useStore } from '../store';
 import { useCompiled } from '../useCompiled';
 import { CodeView } from './CodeView';
+import { Inspector } from './Inspector';
+import { Preview } from './Preview';
 
 export function RightPanel() {
   const { graph, result } = useCompiled();
@@ -12,6 +14,7 @@ export function RightPanel() {
   const selectedId = useStore((s) => s.selectedNodeId);
   const rf = useReactFlow();
   const [copied, setCopied] = useState<'full' | 'clean' | null>(null);
+  const [view, setView] = useState<'code' | 'preview'>('code');
   const [ticked, setTicked] = useState<Record<string, boolean>>({});
   const [embedded, setEmbedded] = useState<{ source: string; result: EmbedResult } | null>(null);
   const errors = result.diagnostics.filter((d) => d.severity === 'error');
@@ -79,7 +82,10 @@ export function RightPanel() {
 
       <section className="panel output">
         <div className="panel-head">
-          <h2>Output</h2>
+          <div className="segmented" role="tablist" aria-label="Output view">
+            <button role="tab" aria-selected={view === 'code'} onClick={() => setView('code')}>Code</button>
+            <button role="tab" aria-selected={view === 'preview'} onClick={() => setView('preview')}>Preview</button>
+          </div>
           <div className="btn-row">
             <button className="ghost small" onClick={() => void copy(true)} disabled={!canCopy} title="Copy without the embedded graph">
               {copied === 'clean' ? 'Copied ✓' : 'Copy clean'}
@@ -89,7 +95,9 @@ export function RightPanel() {
             </button>
           </div>
         </div>
-        {canCopy ? (
+        {view === 'preview' ? (
+          <Preview />
+        ) : canCopy ? (
           <>
             <CodeView code={result.code} highlight={highlight} onLineClick={onLineClick} />
             {embedOn && (
@@ -136,29 +144,5 @@ export function RightPanel() {
         </ul>
       </section>
     </aside>
-  );
-}
-
-function Inspector() {
-  const selectedId = useStore((s) => s.selectedNodeId);
-  const { graph } = useCompiled();
-  const inst = graph.nodes.find((n) => n.id === selectedId);
-  if (!inst) return null;
-  const def = NODE_DEFS.get(inst.type);
-  return (
-    <section className="panel inspector">
-      <div className="panel-head">
-        <h2>{def?.label ?? inst.type}</h2>
-        <button className="danger small" onClick={() => actions.removeNodes([inst.id])}>Delete</button>
-      </div>
-      {def && def.special !== 'output' && !def.inline && def.category !== 'context' && (
-        <label className="field">
-          Name <span className="muted small">(sets the variable name)</span>
-          <input value={inst.name ?? ''} placeholder={def.label} onChange={(e) => actions.renameNode(inst.id, e.target.value)} />
-        </label>
-      )}
-      {def && <p className="small">{def.description}</p>}
-      {def?.verify && <p className="small muted">Check in AE: {def.verify}</p>}
-    </section>
   );
 }

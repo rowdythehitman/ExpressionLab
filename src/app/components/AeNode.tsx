@@ -30,9 +30,12 @@ function AeNodeImpl({ id, data, selected }: NodeProps<RFNode<AeNodeData>>) {
 
   return (
     <div className={`ae-node cat-${def.category} status-${data.status} ${selected ? 'selected' : ''}`} title={def.description}>
-      <div className="ae-node-head">
+      <div className="ae-node-head" style={inst.color ? { background: inst.color } : undefined}>
         <span>{title}</span>
-        {title !== def.label && <span className="ae-node-type">{def.label}</span>}
+        <span className="ae-node-meta">
+          {title !== def.label && <span className="ae-node-type">{def.label}</span>}
+          {inst.preview && <span className="ae-node-badge" title="Shown in the Output Preview">◉</span>}
+        </span>
       </div>
 
       {def.special === 'ref.control' && (
@@ -91,7 +94,7 @@ function AeNodeImpl({ id, data, selected }: NodeProps<RFNode<AeNodeData>>) {
 
 export const AeNode = memo(AeNodeImpl);
 
-function InputWidget({ inst, port, type }: { inst: NodeInstance; port: PortDef; type: string }) {
+export function InputWidget({ inst, port, type }: { inst: NodeInstance; port: PortDef; type: string }) {
   const value = inst.inputs[port.id] ?? port.default;
   const set = (v: Literal | undefined) => actions.setInput(inst.id, port.id, v);
 
@@ -159,7 +162,7 @@ function numberOrCode(s: string): Literal | undefined {
   return Number.isFinite(n) ? n : s;
 }
 
-function ParamWidget({ inst, param }: { inst: NodeInstance; param: ParamDef }) {
+export function ParamWidget({ inst, param }: { inst: NodeInstance; param: ParamDef }) {
   const value = inst.params[param.id] ?? param.default;
   const set = (v: Literal) => actions.setParam(inst.id, param.id, v);
   let input;
