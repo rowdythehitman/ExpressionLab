@@ -1,6 +1,8 @@
 import { parse } from 'acorn';
 import { describe, expect, it } from 'vitest';
-import { createCepHost, detectHost, HostError, type PropertyInfo } from '../../src/app/host';
+import { generateSetupScript } from '../../src/core';
+import { buildGlobalsReport, createCepHost, detectHost, HostError, type PropertyInfo } from '../../src/app/host';
+import { goldenProject } from '../helpers';
 import { targetForProperty } from '../../src/app/host/target';
 import { HOST_JSX, makeAE } from './fakeAE';
 
@@ -138,4 +140,56 @@ describe('targetForProperty', () => {
   ])('%#: %o', (p, expected) => {
     expect(targetForProperty(p)).toEqual(expected);
   });
+});
+
+describe('Build Globals (setup script in panel mode)', () => {
+  it('is valid ES3 and needs an open comp', async () => {
+    const p = goldenProject();
+    expect(() => parse(generateSetupScript(p, { report: 'panel' }), { ecmaVersion: 3 })).not.toThrow();
+    const ae = makeAE();
+    await expect(createCepHost(ae.evalScript).buildGlobals(p)).rejects.toThrow(/Open a composition/);
+  });
+
+  it('creates the null and controls, reports them, and skips what is already there on a second run', async () => {
+    const p = goldenProject();
+    p.globals.layers.push({ id: 't1', key: 'titleLayer', layerName: 'Title', is3D: false, kind: 'text' });
+    p.globals.controls.push(
+      { id: 'd1', effectName: 'Mode', type: 'dropdown', host: 'ctrls', dropdownItems: ['A', 'B'], previewValue: 2 },
+      { id: 'c9', effectName: 'Show', type: 'checkbox', host: { layerId: 't1' } },
+    );
+    const ae = makeAE();
+    ae.openComp();
+    const host = createCepHost(ae.evalScript);
+
+    const first = await host.buildGlobals(p);
+    const globals = ae.comp.all.find((l) => l.name === 'GLOBALS')!;
+    expect(globals.effects.map((e) => e.name)).toEqual([...p.globals.controls.filter((c) => c.host === 'ctrls').map((c) => c.effectName)]);
+    expect(globals.effects.find((e) => e.name === 'Mode')).toMatchObject({ matchName: 'ADBE Dropdown Control', items: ['A', 'B'], value: 2 });
+    expect(first.made).toContain('Null "GLOBALS"');
+    expect(first.skipped).toEqual([`Layer "Title" (text) isn't in this comp; add it and run again`]);
+    expect(ae.log).toEqual(['begin:ExpressionLab setup', 'end']);
+
+    ae.addLayer('Title');
+    const second = await host.buildGlobals(p);
+    expect(second.made).toEqual(['Show on Title']);
+    expect(second.skipped.every((s) => s.includes('already on GLOBALS'))).toBe(true);
+    expect(ae.comp.all.filter((l) => l.name === 'GLOBALS')).toHaveLength(1);
+  });
+
+  it('describes the result for the panel', async () => {
+    const ok = await buildGlobalsReport({ buildGlobals: async () => ({ made: ['Null "GLOBALS"', 'Speed on GLOBALS'], skipped: ['Tint: x'] }) } as never, goldenProject());
+    expect(ok).toEqual({ ok: true, text: 'Built 2: Null "GLOBALS", Speed on GLOBALS\nSkipped: Tint: x' });
+    const none = await buildGlobalsReport({ buildGlobals: async () => ({ made: [], skipped: [] }) } as never, goldenProject());
+    expect(none.text).toMatch(/already there/);
+    const err = await buildGlobalsReport({ buildGlobals: async () => { throw new HostError('nope'); } } as never, goldenProject());
+    expect(err).toEqual({ ok: false, text: 'nope' });
+  });
+});
+
+it('Build Globals reports an AE error part-way through instead of failing silently', async () => {
+  const ae = makeAE();
+  ae.openComp();
+  (ae.comp.layers as { addNull: () => never }).addNull = () => { throw new Error('comp is locked'); };
+  await expect(createCepHost(ae.evalScript).buildGlobals(goldenProject())).rejects.toThrow('ExpressionLab: comp is locked');
+  expect(ae.log.at(-1)).toBe('end');
 });

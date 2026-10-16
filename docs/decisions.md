@@ -196,3 +196,7 @@ Choices made where the spec (docs/SPEC.md) said "decide" or was ambiguous. Newes
     sandbox runtime avoids `.at()` because it runs unpolyfilled in the iframe.
 61. **Files in the panel:** downloads don't exist in CEP, so `downloadText` goes through `cep.fs` save dialogs. Copy
     falls back to `execCommand` when the async clipboard is refused.
+62. **Build Globals** is the setup script run from the panel (button row, File menu, Globals dialog) in a "panel"
+    report mode. Instead of an alert, it returns `{ok, made, skipped}` through host.jsx's `ExpressionLab.toJSON`,
+    and an error part-way through comes back as a message (with the undo group closed). The panel shows the result
+    inline. The downloadable `.jsx` is unchanged.

@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
-import { APP_NAME, generateSetupScript, TARGETS, type Settings, type ValueType } from '../../core';
-import { getHost } from '../host';
+import { APP_NAME, TARGETS, type Settings, type ValueType } from '../../core';
+import { buildGlobalsReport, getHost } from '../host';
 import { PRESETS } from '../../core/presets';
 import { downloadSetupScript, exportProject, parseProjectFile } from '../persist';
 import { actions, useGraph, useStore } from '../store';
@@ -41,13 +41,7 @@ export function TopBar() {
     });
 
   const host = getHost();
-  const runSetup = async () => {
-    try {
-      await host!.runScript(generateSetupScript(project));
-    } catch (e) {
-      setNotice(e instanceof Error ? e.message : String(e));
-    }
-  };
+  const buildGlobals = async () => setNotice((await buildGlobalsReport(host!, project)).text);
 
   const onImport = async (file: File | undefined) => {
     if (!file) return;
@@ -136,8 +130,8 @@ export function TopBar() {
           <button className="ghost" onClick={() => exportProject(project)} title="Save the project as .aenodes.json">Save project</button>
           <button className="ghost" onClick={() => actions.openImport()} title="Paste an expression copied from ExpressionLab to edit its graph">Paste expression…</button>
           {host && (
-            <button className="ghost" onClick={() => void runSetup()} title="Creates the GLOBALS null, layers and controls in the active comp">
-              Create globals in comp
+            <button className="ghost" onClick={() => void buildGlobals()} title="Creates the GLOBALS null, layers and controls in the active comp">
+              Build Globals
             </button>
           )}
           <button className="ghost" onClick={() => downloadSetupScript(project)} title="Creates the GLOBALS null, layers and controls in your comp">AE setup script (.jsx)</button>

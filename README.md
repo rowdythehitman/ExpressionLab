@@ -52,7 +52,7 @@ The compiler (`src/core`) is pure TypeScript with no React or DOM code. Its test
 Manual checks for real After Effects are in [`docs/ae-verification.md`](docs/ae-verification.md).
 
 **After Effects panel (CEP):** the same app inside AE 2022+, with Apply to selected, Use selected property, Load
-from selected and Create globals in comp. See [`docs/ae-panel.md`](docs/ae-panel.md).
+from selected and Build Globals. See [`docs/ae-panel.md`](docs/ae-panel.md).
 
 ## Develop
 

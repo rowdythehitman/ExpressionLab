@@ -8,8 +8,11 @@ The same app, docked in After Effects 2022 or later (Windows or macOS), with but
   shape path and so on) from the selected property.
 - **Load from selected:** opens the graph embedded in the selected property's expression (the `//@ae-nodes` line) as
   a new tab.
-- **File › Create globals in comp:** runs the setup script in the active comp, creating the GLOBALS null, the layers
-  and the controls. You don't need to download the `.jsx`.
+- **Build Globals** (in the button row, the File menu and the Globals dialog): builds your Globals in the active
+  comp, adding the GLOBALS null, your null layers and every control (with dropdown items and preview values). Text,
+  shape and other non-null layers must already exist; their controls are added if they do. Anything that's already
+  there is skipped, so it's safe to press again after adding controls. It's one undo step, and the panel lists what
+  it built. Controls on "this layer" go on the layers selected in the timeline.
 - **Save project** and the setup script download open a normal save dialog.
 
 ## Install a .zxp (with your ZXP installer)
@@ -44,6 +47,16 @@ Unsigned panels load once CEP's debug mode is on. This is handy while developing
 
 To debug, build with `PANEL_DEBUG=1 npm run build:panel`. Then open `http://localhost:8088` in Chrome while the
 panel is open.
+
+## Update to a new version
+
+1. Get the new build, either from the latest CI run's `expressionlab-panel` artifact or with `npm run build:panel`.
+2. Sign it with the **same** certificate and password as before, under a new file name (for example
+   `ExpressionLab-0.2.0.zxp`).
+3. Install the new `.zxp` with your ZXP installer. It replaces the old version, because the extension id stays
+   `com.expressionlab.panel`.
+4. Restart After Effects. Your projects are kept, because autosave lives in the panel's own storage, not in the
+   extension folder.
 
 ## Build and sign
 

@@ -13,6 +13,6 @@ export {
   embedGraph, decodePayload, setRawDeflate, hasPayload, importGraph, hashBody, globalsSubset, customNodesUsed,
   PAYLOAD_PREFIX, PAYLOAD_WARN_BYTES, type DecodedPayload, type EmbedResult, type RawDeflate,
 } from './compiler/embed';
-export { generateSetupScript, jsxString } from './setup/jsx';
+export { generateSetupScript, jsxString, type SetupScriptOptions } from './setup/jsx';
 export { nodeLibrary, validateCustomNode, CUSTOM_PREFIX } from './library';
 export { expandMacros, makeMacro, type MakeMacroResult } from './macro';

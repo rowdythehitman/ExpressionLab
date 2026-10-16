@@ -147,6 +147,8 @@ var ExpressionLab = (function () {
 
   return {
     version: 1,
+    // Used by the setup script the panel runs for Build Globals.
+    toJSON: json,
     ping: guard(function () { return { ok: true, version: 1 }; }),
     getSelection: guard(getSelection),
     applyExpression: guard(applyExpression),

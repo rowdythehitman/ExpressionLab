@@ -1,10 +1,11 @@
 // Globals editor (pop-up): the pinned GLOBALS null, "this layer", other layers, each with its controls,
 // and comps. Everything nodes reference by id, so renaming here updates every expression.
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   CONTROLS, camelCase, isValidIdentifier,
   type ControlGlobal, type ControlHost, type ControlType, type LayerGlobal, type Project,
 } from '../../core';
+import { buildGlobalsReport, getHost } from '../host';
 import { downloadSetupScript } from '../persist';
 import { newId, useStore } from '../store';
 
@@ -18,6 +19,8 @@ const hostFrom = (k: HostKey): ControlHost => (k === 'ctrls' || k === 'thisLayer
 export function GlobalsDialog({ focusId, onClose }: { focusId?: string; onClose: () => void }) {
   const globals = useStore((s) => s.project.globals);
   const body = useRef<HTMLDivElement>(null);
+  const host = getHost();
+  const [built, setBuilt] = useState<{ ok: boolean; text: string } | null>(null);
 
   useEffect(() => {
     if (focusId) body.current?.querySelector<HTMLElement>(`[data-gid="${focusId}"] input`)?.focus();
@@ -47,6 +50,14 @@ export function GlobalsDialog({ focusId, onClose }: { focusId?: string; onClose:
         <div className="panel-head">
           <h2 id="globals-title">Globals</h2>
           <div className="btn-row">
+            {host && (
+              <button
+                onClick={() => void buildGlobalsReport(host, useStore.getState().project).then(setBuilt)}
+                title="Add the GLOBALS null, your null layers and every control below to the active comp"
+              >
+                Build Globals
+              </button>
+            )}
             <button
               className="ghost small"
               onClick={() => downloadSetupScript(useStore.getState().project)}
@@ -60,6 +71,10 @@ export function GlobalsDialog({ focusId, onClose }: { focusId?: string; onClose:
         <p className="small muted">
           Layers and expression controls your nodes refer to. Rename anything here and every expression updates.
         </p>
+
+        {built && (
+          <p className={`small ae-status ${built.ok ? 'ok' : 'error'}`} role={built.ok ? 'status' : 'alert'}>{built.text}</p>
+        )}
 
         <div className="globals-body" ref={body}>
           <section className="gcard pinned" data-gid="ctrls" aria-label="Globals null">

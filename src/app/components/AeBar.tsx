@@ -2,9 +2,9 @@
 // properties, take the graph target from the selected property, and load a graph back from it.
 import { useState } from 'react';
 import { TARGETS } from '../../core';
-import { getHost, type AeHost } from '../host';
+import { buildGlobalsReport, getHost, type AeHost } from '../host';
 import { targetForProperty } from '../host/target';
-import { actions } from '../store';
+import { actions, useStore } from '../store';
 
 type Status = { kind: 'ok' | 'error' | 'busy'; text: string } | null;
 
@@ -42,6 +42,11 @@ export function AeBar({ canApply, getCode }: { canApply: boolean; getCode: () =>
     return { kind: 'ok', text: `Target: ${label}${target.valueType ? ` (${target.valueType})` : ''}, from ${sel.property.layer.name} › ${sel.property.name}` };
   });
 
+  const build = () => run('Building globals…', async (h) => {
+    const r = await buildGlobalsReport(h, useStore.getState().project);
+    return { kind: r.ok ? 'ok' : 'error', text: r.text };
+  });
+
   const load = () => run('Reading expression…', async (h) => {
     const { property, expression } = await h.readExpression();
     if (!expression.trim()) return { kind: 'error', text: `${property} has no expression.` };
@@ -57,6 +62,9 @@ export function AeBar({ canApply, getCode }: { canApply: boolean; getCode: () =>
         </button>
         <button className="ghost small" onClick={() => void takeSelected()} title="Set the graph's target from the property selected in the timeline">
           Use selected property
+        </button>
+        <button className="ghost small" onClick={() => void build()} title="Add the GLOBALS null, your null layers and every control from Globals to the active comp (skips what's already there; one undo step)">
+          Build Globals
         </button>
         <button className="ghost small" onClick={() => void load()} title="Open the graph embedded in the selected property's expression">
           Load from selected

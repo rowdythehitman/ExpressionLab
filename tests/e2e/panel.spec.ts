@@ -24,7 +24,28 @@ const FAKE_AE = (hostJsx: string) => {
     propertyGroup: (n: number) => (n >= 2 ? layer : transform),
   });
   const props = { position: makeProp('Position', 'ADBE Position', 6415), opacity: makeProp('Opacity', 'ADBE Opacity', 6417) };
-  const comp = Object.assign(new CompItem(), { name: 'Main', selectedProperties: [props.position] });
+  type FakeFx = { name: string; property: () => { setValue(): void; setPropertyParameters(): void } };
+  const makeLayer = (name: string) => {
+    const effects: FakeFx[] = [];
+    return {
+      name, threeDLayer: false, effects,
+      property: () => ({
+        property: (n: string) => effects.find((e) => e.name === n) ?? null,
+        addProperty: (m: string) => {
+          const fx = { name: m, property: () => ({ setValue() {}, setPropertyParameters() {} }) };
+          effects.push(fx);
+          return fx;
+        },
+      }),
+    };
+  };
+  const all: Array<ReturnType<typeof makeLayer>> = [];
+  const comp = Object.assign(new CompItem(), {
+    name: 'Main', selectedProperties: [props.position], selectedLayers: [], all,
+    get numLayers() { return all.length; },
+    layer: (i: number) => all[i - 1],
+    layers: { addNull: () => { const l = makeLayer('Null 1'); all.unshift(l); return l; } },
+  });
   const calls: string[] = [];
   Object.assign(w, {
     CompItem, TextLayer, PropertyType, PropertyValueType,
@@ -48,7 +69,7 @@ const FAKE_AE = (hostJsx: string) => {
 
 test.skip(!existsSync(INDEX) && !process.env.CI, 'run `npm run build:panel` first');
 
-test('AE panel: apply, use selected property, load from selected, create globals', async ({ page }) => {
+test('AE panel: apply, use selected property, load from selected, build globals', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
   await page.addInitScript(FAKE_AE, HOST_JSX);
@@ -80,10 +101,12 @@ test('AE panel: apply, use selected property, load from selected, create globals
   await page.getByRole('button', { name: 'Load from selected' }).click();
   await expect(page.getByRole('tablist', { name: 'Expressions' }).getByRole('tab')).toHaveCount(2);
 
-  // Create globals in comp runs the generated setup script in AE.
-  await page.locator('summary', { hasText: 'File' }).click();
-  await page.getByRole('button', { name: 'Create globals in comp' }).click();
-  await expect.poll(() => page.evaluate(() => (window as never as { __fakeAE: { calls: string[] } }).__fakeAE.calls.some((c) => c.includes('ensureNull(')))).toBe(true);
+  // Build Globals runs the setup script in AE and shows what it did in the panel.
+  await page.locator('.ae-bar').getByRole('button', { name: 'Build Globals' }).click();
+  await expect(page.locator('.ae-bar').getByRole('status')).toContainText('Built ');
+  await expect(page.locator('.ae-bar').getByRole('status')).toContainText('Null "GLOBALS"');
+  const globalsFx = await page.evaluate(() => (window as never as { __fakeAE: { comp: { all: Array<{ name: string; effects: Array<{ name: string }> }> } } }).__fakeAE.comp.all.find((l) => l.name === 'GLOBALS')!.effects.map((e) => e.name));
+  expect(globalsFx.length).toBeGreaterThan(0);
 
   expect(errors).toEqual([]);
 });

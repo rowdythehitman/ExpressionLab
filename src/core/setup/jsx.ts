@@ -15,8 +15,19 @@ function value(c: ControlGlobal): string {
   return Array.isArray(v) ? `[${v.join(', ')}]` : String(v);
 }
 
-export function generateSetupScript(project: Project): string {
+export interface SetupScriptOptions {
+  /**
+   * 'alert' (the downloadable .jsx): ends with an alert listing what was made.
+   * 'panel' (Build Globals in the AE panel): returns `{ ok, made, skipped }` or `{ ok: false, error }` as JSON
+   * text through cep/host/host.jsx's ExpressionLab.toJSON, so the panel can show the result itself.
+   */
+  report?: 'alert' | 'panel';
+}
+
+export function generateSetupScript(project: Project, opts: SetupScriptOptions = {}): string {
   const { globals } = project;
+  const panel = opts.report === 'panel';
+  const noComp = `${APP_NAME}: open (or select) a composition first, then run this script again.`;
   const lines: string[] = [
     `// ${APP_NAME} setup script: creates the layers and expression controls your expressions use.`,
     '// In After Effects: open the comp, then File > Scripts > Run Script File... and pick this file.',
@@ -24,8 +35,10 @@ export function generateSetupScript(project: Project): string {
     '(function () {',
     '  var comp = app.project.activeItem;',
     '  if (!(comp && comp instanceof CompItem)) {',
-    `    alert(${jsxString(`${APP_NAME}: open (or select) a composition first, then run this script again.`)});`,
-    '    return;',
+    panel
+      ? `    return ExpressionLab.toJSON({ ok: false, error: ${jsxString('Open a composition first (click into its timeline), then try again.')} });`
+      : `    alert(${jsxString(noComp)});`,
+    ...(panel ? [] : ['    return;']),
     '  }',
     `  app.beginUndoGroup(${jsxString(`${APP_NAME} setup`)});`,
     '  var made = [];',
@@ -101,11 +114,27 @@ export function generateSetupScript(project: Project): string {
   lines.push(
     '',
     '  app.endUndoGroup();',
-    `  var report = ${jsxString(`${APP_NAME} setup`)} + "\\n\\nCreated:\\n" + (made.length ? made.join("\\n") : "nothing new");`,
-    '  if (skipped.length) { report += "\\n\\nSkipped:\\n" + skipped.join("\\n"); }',
-    '  alert(report);',
+    ...(panel
+      ? ['  return ExpressionLab.toJSON({ ok: true, made: made, skipped: skipped });']
+      : [
+          `  var report = ${jsxString(`${APP_NAME} setup`)} + "\\n\\nCreated:\\n" + (made.length ? made.join("\\n") : "nothing new");`,
+          '  if (skipped.length) { report += "\\n\\nSkipped:\\n" + skipped.join("\\n"); }',
+          '  alert(report);',
+        ]),
     '})();',
     '',
   );
+  if (panel) {
+    // An error part-way through would surface as an unhelpful "EvalScript error.": report it instead.
+    const i = lines.indexOf('(function () {');
+    lines.splice(i, 1, '(function () {', ' try {', '  return (function () {');
+    lines.splice(lines.lastIndexOf('})();'), 1,
+      '  })();',
+      ' } catch (err) {',
+      '  try { app.endUndoGroup(); } catch (err2) {}',
+      `  return ExpressionLab.toJSON({ ok: false, error: ${jsxString(`${APP_NAME}: `)} + (err.message || err) + (err.line ? " (line " + err.line + ")" : "") });`,
+      ' }',
+      '})();');
+  }
   return lines.join('\n');
 }

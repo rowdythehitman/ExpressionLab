@@ -1,6 +1,6 @@
 // Host adapter: in the After Effects panel (CEP) the app can talk to AE through cep/host/host.jsx;
 // on the web there is no host and the AE buttons are hidden. Everything AE-specific goes through here.
-import { jsxString } from '../../core';
+import { generateSetupScript, jsxString, type Project } from '../../core';
 
 /** A selected AE property, as cep/host/host.jsx describes it. */
 export interface PropertyInfo {
@@ -33,10 +33,17 @@ export interface AeHost {
   applyExpression(code: string): Promise<ApplyResult>;
   /** The expression on the first selected property. */
   readExpression(): Promise<{ property: string; expression: string }>;
-  /** Runs an ExtendScript (for example the setup script) in AE. */
+  /** Creates the project's GLOBALS null, layers and controls in the active comp (the setup script). */
+  buildGlobals(project: Project): Promise<BuildResult>;
+  /** Runs an ExtendScript in AE. */
   runScript(source: string): Promise<string>;
   /** Asks where to save, then writes the file. Resolves false if cancelled. */
   saveTextFile(filename: string, text: string): Promise<boolean>;
+}
+
+export interface BuildResult {
+  made: string[];
+  skipped: string[];
 }
 
 export class HostError extends Error {}
@@ -51,8 +58,12 @@ const NOT_LOADED = "The panel couldn't reach its After Effects script. Close and
 
 /** Builds the adapter around CEP's evalScript (separate so tests can run host.jsx in a fake AE). */
 export function createCepHost(evalScript: (source: string) => Promise<string>, fs?: CepFs): AeHost {
-  const call = async <T>(fn: string, arg?: string): Promise<T> => {
-    const raw = await evalScript(`ExpressionLab.${fn}(${arg === undefined ? '' : jsxString(arg)})`);
+  const call = <T>(fn: string, arg?: string): Promise<T> =>
+    run<T>(`ExpressionLab.${fn}(${arg === undefined ? '' : jsxString(arg)})`);
+
+  /** Runs a script that returns host.jsx-style JSON ({ ok, ... } / { ok: false, error }). */
+  const run = async <T>(source: string): Promise<T> => {
+    const raw = await evalScript(source);
     let res: { ok?: boolean; error?: string } & T;
     try {
       res = JSON.parse(raw);
@@ -67,6 +78,7 @@ export function createCepHost(evalScript: (source: string) => Promise<string>, f
     getSelection: () => call<AeSelection>('getSelection'),
     applyExpression: (code) => call<ApplyResult>('applyExpression', code),
     readExpression: () => call<{ property: string; expression: string }>('readExpression'),
+    buildGlobals: (project) => run<BuildResult>(generateSetupScript(project, { report: 'panel' })),
     async runScript(source) {
       const out = await evalScript(source);
       if (out === 'EvalScript error.') throw new HostError('The script failed in After Effects.');
@@ -117,5 +129,17 @@ export async function copyText(text: string): Promise<void> {
     const ok = document.execCommand('copy');
     ta.remove();
     if (!ok) throw e;
+  }
+}
+
+/** Runs Build Globals and describes the result in a sentence or two (shown in the panel). */
+export async function buildGlobalsReport(host: AeHost, project: Project): Promise<{ ok: boolean; text: string }> {
+  try {
+    const { made, skipped } = await host.buildGlobals(project);
+    const lines = [made.length ? `Built ${made.length}: ${made.join(', ')}` : 'Everything was already there; nothing new to build.'];
+    if (skipped.length) lines.push(`Skipped: ${skipped.join('; ')}`);
+    return { ok: true, text: lines.join('\n') };
+  } catch (e) {
+    return { ok: false, text: e instanceof Error ? e.message : String(e) };
   }
 }

@@ -34,6 +34,37 @@ export function makeAE() {
   class CompItem {
     name = 'Main Comp';
     selectedProperties: FakeProp[] = [];
+    selectedLayers: FakeLayer[] = [];
+    all: FakeLayer[] = [];
+    get numLayers() { return this.all.length; }
+    layer(i: number) { return this.all[i - 1]!; }
+    layers = {
+      addNull: () => {
+        const l = new FakeLayer('Null 1');
+        this.all.unshift(l);
+        return l;
+      },
+    };
+  }
+  /** A layer with an Effects group, for the setup script. */
+  class FakeLayer {
+    threeDLayer = false;
+    effects: Array<{ name: string; matchName: string; value?: unknown; items?: string[] }> = [];
+    constructor(public name: string) {}
+    property(matchName: string) {
+      if (matchName !== 'ADBE Effect Parade') throw new Error(`no ${matchName}`);
+      return {
+        property: (name: string) => this.effects.find((e) => e.name === name) ?? null,
+        addProperty: (m: string) => {
+          const fx: { name: string; matchName: string; value?: unknown; items?: string[]; property(i: number): unknown } = {
+            name: m, matchName: m,
+            property: () => ({ setValue: (v: unknown) => { fx.value = v; }, setPropertyParameters: (items: string[]) => { fx.items = items; } }),
+          };
+          this.effects.push(fx);
+          return fx;
+        },
+      };
+    }
   }
   class AVLayer {}
   class TextLayer extends AVLayer {}
@@ -76,6 +107,7 @@ export function makeAE() {
 
   return {
     app, comp, log, prop,
+    addLayer(name: string) { const l = new FakeLayer(name); comp.all.push(l); return l; },
     openComp() { app.project.activeItem = comp; },
     evalScript: async (src: string) => String(runInContext(src, ctx)),
   };
