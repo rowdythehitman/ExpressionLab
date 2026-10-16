@@ -1,8 +1,9 @@
 // Inspector for the selected node(s): variable name (with the identifier actually emitted), colour,
 // Output Preview toggle, every input and setting at full size, and node actions.
-import { CONTROLS, NODE_DEFS, camelCase, type ControlGlobal, type NodeInstance } from '../../core';
-import { actions, useStore } from '../store';
+import { CONTROLS, camelCase, type ControlGlobal, type NodeDef, type NodeInstance } from '../../core';
+import { actions, useDefs, useStore } from '../store';
 import { useCompiled } from '../useCompiled';
+import { useState } from 'react';
 import { InputWidget, ParamWidget } from './AeNode';
 import { CATEGORY_LABEL } from './ports';
 
@@ -14,6 +15,7 @@ export function Inspector() {
   const selectedId = useStore((s) => s.selectedNodeId);
   const { graph, result, analysis } = useCompiled();
   const controls = useStore((s) => s.project.globals.controls);
+  const defs = useDefs();
 
   if (selection.length > 1) {
     return (
@@ -28,13 +30,14 @@ export function Inspector() {
           <button className="ghost small" onClick={() => actions.duplicateSelection()}>Duplicate</button>
           <button className="danger small" onClick={() => actions.removeNodes(selection)}>Delete</button>
         </div>
+        <MakeMacro />
       </section>
     );
   }
 
   const inst = graph.nodes.find((n) => n.id === selectedId);
   if (!inst) return null;
-  const def = NODE_DEFS.get(inst.type);
+  const def = defs.get(inst.type);
   if (!def) return null;
   const isOutput = def.special === 'output';
   const control = def.special === 'ref.control' ? controls.find((c) => c.id === inst.ref?.controlId) : undefined;
@@ -57,6 +60,14 @@ export function Inspector() {
         </div>
       </div>
       <p className="small">{def.description}</p>
+      {def.id.startsWith('user.') && (
+        <div className="btn-row">
+          {def.macro && <button className="ghost small" onClick={() => actions.ungroupMacro(inst.id)} title="Put the macro's nodes back on the canvas">Ungroup</button>}
+          <button className="ghost small" onClick={() => useStore.setState({ customDialog: { focusId: def.id } })}>
+            Edit {def.macro ? 'macro' : 'node'} definition
+          </button>
+        </div>
+      )}
 
       {!isOutput && (
         <div className="field">
@@ -124,7 +135,7 @@ export function Inspector() {
         return (
           <div className="insp-row" key={port.id}>
             <span>{port.label} <span className="type-chip">{type}</span></span>
-            {edge ? <span className="small muted">← {sourceLabel(graph.nodes, controls, edge.from.node, edge.from.port)}</span> : <InputWidget inst={inst} port={port} type={type} />}
+            {edge ? <span className="small muted">← {sourceLabel(defs, graph.nodes, controls, edge.from.node, edge.from.port)}</span> : <InputWidget inst={inst} port={port} type={type} />}
           </div>
         );
       })}
@@ -148,10 +159,32 @@ export function Inspector() {
   );
 }
 
+/** Selected nodes → one reusable macro node. */
+function MakeMacro() {
+  const [name, setName] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  return (
+    <form
+      className="make-macro"
+      onSubmit={(e) => {
+        e.preventDefault();
+        setError(actions.makeMacroFromSelection(name.trim() || 'Macro'));
+      }}
+    >
+      <label htmlFor="macro-name" className="small">Make a reusable node from the selection</label>
+      <div className="btn-row">
+        <input id="macro-name" placeholder="Macro name" value={name} onChange={(e) => setName(e.target.value)} />
+        <button type="submit" className="small">Make macro</button>
+      </div>
+      {error && <p className="error-text small" role="alert">{error}</p>}
+    </form>
+  );
+}
+
 /** "Wiggle Freq" for a control, "Text Box › Center" for a multi-output node. */
-function sourceLabel(nodes: NodeInstance[], controls: ControlGlobal[], nodeId: string, port: string): string {
+function sourceLabel(defs: ReadonlyMap<string, NodeDef>, nodes: NodeInstance[], controls: ControlGlobal[], nodeId: string, port: string): string {
   const n = nodes.find((x) => x.id === nodeId);
-  const d = n && NODE_DEFS.get(n.type);
+  const d = n && defs.get(n.type);
   if (!n || !d) return nodeId;
   const control = d.special === 'ref.control' ? controls.find((c) => c.id === n.ref?.controlId) : undefined;
   const out = d.outputs.length > 1 ? ` › ${d.outputs.find((o) => o.id === port)?.label ?? port}` : '';

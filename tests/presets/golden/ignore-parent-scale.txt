@@ -1,0 +1,12 @@
+// ExpressionLab · Scale (2D)
+// Ignore Parent Scale
+let ignoreParentScale_s = value;
+let ignoreParentScale_p = thisLayer;
+while (ignoreParentScale_p.hasParent) {
+  ignoreParentScale_p = ignoreParentScale_p.parent;
+  const ps = ignoreParentScale_p.transform.scale.value;
+  ignoreParentScale_s = ignoreParentScale_s.map((v, i) => (ps[i] === 0 ? v : (v * 100) / ps[i]));
+}
+const ignoreParentScale = ignoreParentScale_s;
+
+ignoreParentScale

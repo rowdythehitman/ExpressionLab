@@ -1,0 +1,5 @@
+// ExpressionLab · Opacity
+// Wiggle Between
+const wiggleBetween = wiggle(2, (80 - 20) / 2, 1) - value + (80 + 20) / 2;
+
+wiggleBetween

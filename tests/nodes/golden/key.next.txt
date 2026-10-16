@@ -1,0 +1,6 @@
+// ExpressionLab · Rotation
+// Next Keyframe
+const nextKeyframe_k = numKeys > 0 ? thisProperty.nextKey(time) : null;
+const nextKeyframeTime = (nextKeyframe_k ? nextKeyframe_k.time : 0);
+
+nextKeyframeTime

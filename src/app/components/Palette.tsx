@@ -1,9 +1,9 @@
 // Searchable node palette (spec §12). Click to add at the canvas centre, or drag onto the canvas.
 import { useReactFlow } from '@xyflow/react';
 import { useMemo, useState } from 'react';
-import { NODE_DEFS, type NodeDef } from '../../core';
+import { type NodeDef } from '../../core';
 import { disabledReason as reasonFor } from '../nodeSearch';
-import { actions, useGraph, useStore } from '../store';
+import { actions, useDefs, useGraph, useStore } from '../store';
 import { CATEGORY_LABEL, CATEGORY_ORDER } from './ports';
 
 export const DRAG_MIME = 'application/x-expressionlab-node';
@@ -13,15 +13,16 @@ export function Palette() {
   const graph = useGraph();
   const aeTarget = useStore((s) => s.project.settings.aeTarget);
   const rf = useReactFlow();
-  const disabledReason = (d: NodeDef) => reasonFor(d, graph, aeTarget);
+  const defs = useDefs();
+  const disabledReason = (d: NodeDef) => reasonFor(d, graph, aeTarget, defs);
 
   const groups = useMemo(() => {
     const needle = q.trim().toLowerCase();
     const match = (d: NodeDef) =>
       !needle || [d.label, d.id, d.description, ...d.tags].some((s) => s.toLowerCase().includes(needle));
-    return CATEGORY_ORDER.map((c) => ({ c, defs: [...NODE_DEFS.values()].filter((d) => d.category === c && match(d)) }))
+    return CATEGORY_ORDER.map((c) => ({ c, defs: [...defs.values()].filter((d) => d.category === c && match(d)) }))
       .filter((g) => g.defs.length);
-  }, [q]);
+  }, [q, defs]);
 
   const addAtCenter = (type: string) => {
     const el = document.querySelector('.canvas');
@@ -63,7 +64,7 @@ export function Palette() {
                   }}
                   onClick={() => addAtCenter(d.id)}
                 >
-                  {d.label}
+                  {d.label}{d.id.startsWith('user.') && <span className="custom-mark" title="Custom node"> ★</span>}
                 </button>
               );
             })}

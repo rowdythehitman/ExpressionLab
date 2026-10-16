@@ -1,0 +1,11 @@
+// ExpressionLab · Rotation
+// Ignore Parent Rotation
+let ignoreParentRotation_r = value;
+let ignoreParentRotation_p = thisLayer;
+while (ignoreParentRotation_p.hasParent) {
+  ignoreParentRotation_p = ignoreParentRotation_p.parent;
+  ignoreParentRotation_r -= ignoreParentRotation_p.transform.rotation;
+}
+const ignoreParentRotation = ignoreParentRotation_r;
+
+ignoreParentRotation

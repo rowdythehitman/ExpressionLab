@@ -1,0 +1,26 @@
+// ExpressionLab · Opacity
+// Marker
+let marker_n = 0;
+if (marker.numKeys > 0) {
+  marker_n = marker.nearestKey(time).index;
+  if (marker.key(marker_n).time > time) { marker_n--; }
+}
+const markerTime = (marker_n > 0 ? marker.key(marker_n).time : 0);
+const markerDuration = (marker_n > 0 ? marker.key(marker_n).duration : 0);
+const markerActive = (marker_n > 0);
+// Fade In End
+const fadeInEnd = markerTime + 0.5;
+// Marker End
+const markerEnd = markerTime + markerDuration;
+// Fade Out Start
+const fadeOutStart = markerEnd - 0.5;
+// Fade In
+const fadeIn = ease(time, markerTime, fadeInEnd, 0, 100);
+// Fade Out
+const fadeOut = ease(time, fadeOutStart, markerEnd, 100, 0);
+// Faded
+const faded = Math.min(fadeIn, fadeOut);
+// Result
+const result = (markerActive ? faded : 0);
+
+result

@@ -1,0 +1,99 @@
+{
+  "version": 1,
+  "globals": {
+    "ctrls": {
+      "layerName": "GLOBALS"
+    },
+    "layers": [
+      {
+        "id": "l-null",
+        "key": "controllerLayer",
+        "layerName": "Controller",
+        "is3D": false,
+        "kind": "null"
+      }
+    ],
+    "controls": [],
+    "comps": []
+  },
+  "graphs": [
+    {
+      "id": "follow-null",
+      "name": "Control Layer Position with Null",
+      "target": {
+        "id": "position2D"
+      },
+      "nodes": [
+        {
+          "id": "null",
+          "type": "ref.layer",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "inputs": {},
+          "params": {},
+          "ref": {
+            "layerId": "l-null"
+          }
+        },
+        {
+          "id": "tc",
+          "type": "space.toComp",
+          "position": {
+            "x": 250,
+            "y": 0
+          },
+          "inputs": {
+            "p": [
+              0,
+              0
+            ]
+          },
+          "params": {},
+          "name": "Null Position"
+        },
+        {
+          "id": "out",
+          "type": "output",
+          "position": {
+            "x": 500,
+            "y": 0
+          },
+          "inputs": {},
+          "params": {}
+        }
+      ],
+      "edges": [
+        {
+          "id": "null.out-tc.layer",
+          "from": {
+            "node": "null",
+            "port": "out"
+          },
+          "to": {
+            "node": "tc",
+            "port": "layer"
+          }
+        },
+        {
+          "id": "tc.out-out.in",
+          "from": {
+            "node": "tc",
+            "port": "out"
+          },
+          "to": {
+            "node": "out",
+            "port": "in"
+          }
+        }
+      ]
+    }
+  ],
+  "settings": {
+    "aeTarget": 26,
+    "useMatchNames": false,
+    "comments": "minimal",
+    "embedGraph": true
+  }
+}

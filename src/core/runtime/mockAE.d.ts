@@ -26,8 +26,8 @@ export interface MockContext {
   fps?: number;
   compWidth?: number;
   compHeight?: number;
-  /** Marker times on this layer, ascending. */
-  markers?: number[];
+  /** Markers on this layer, ascending: times, or { time, duration, comment }. */
+  markers?: Array<number | { time: number; duration?: number; comment?: string }>;
   /** Keyframes of the current property (for loopIn/loopOut), ascending by time. */
   keys?: Array<{ time: number; value: Num }>;
   textIndex?: number;

@@ -5,6 +5,7 @@ import {
   CONTROLS, camelCase, isValidIdentifier,
   type ControlGlobal, type ControlHost, type ControlType, type LayerGlobal, type Project,
 } from '../../core';
+import { downloadSetupScript } from '../persist';
 import { newId, useStore } from '../store';
 
 const edit = (recipe: (p: Project) => void, key?: string) => useStore.getState().update(recipe, key);
@@ -45,7 +46,16 @@ export function GlobalsDialog({ focusId, onClose }: { focusId?: string; onClose:
       >
         <div className="panel-head">
           <h2 id="globals-title">Globals</h2>
-          <button className="ghost small" onClick={onClose} aria-label="Close">Done</button>
+          <div className="btn-row">
+            <button
+              className="ghost small"
+              onClick={() => downloadSetupScript(useStore.getState().project)}
+              title="A script that creates the GLOBALS null, null layers and every control below in your comp"
+            >
+              ⬇ AE setup script (.jsx)
+            </button>
+            <button className="ghost small" onClick={onClose} aria-label="Close">Done</button>
+          </div>
         </div>
         <p className="small muted">
           Layers and expression controls your nodes refer to. Rename anything here and every expression updates.

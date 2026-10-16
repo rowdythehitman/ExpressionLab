@@ -1,0 +1,6 @@
+// ExpressionLab · Rotation
+// Previous Marker (AE 26)
+const previousMarkerAe26_m = marker.numKeys > 0 ? marker.previousKey(time) : null;
+const previousMarkerAe26Time = (previousMarkerAe26_m ? previousMarkerAe26_m.time : 0);
+
+previousMarkerAe26Time

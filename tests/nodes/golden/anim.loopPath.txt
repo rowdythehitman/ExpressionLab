@@ -1,0 +1,11 @@
+// ExpressionLab · Rotation
+// Loop Path Keyframes
+let loopPathKeyframes_t = time;
+if (numKeys > 1 && time > key(numKeys).time) {
+  const t1 = key(1).time;
+  const span = key(numKeys).time - t1;
+  loopPathKeyframes_t = t1 + ((time - t1) % span);
+}
+const loopPathKeyframes = valueAtTime(loopPathKeyframes_t);
+
+loopPathKeyframes

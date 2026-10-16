@@ -55,6 +55,8 @@ function wiggleOf(base, freq, amp, oct, mult, t, seed) {
 function property(get, ctx) {
   return {
     get value() { return get(ctx.time); },
+    // Like AE, a property used in arithmetic evaluates to its value.
+    valueOf() { return get(ctx.time); },
     valueAtTime: (t) => get(t),
     wiggle: (freq, amp, oct = 1, mult = 0.5, t = ctx.time) => wiggleOf(get(t), freq, amp, oct, mult, t, 7),
     loopOut: () => get(ctx.time),
@@ -106,6 +108,12 @@ export function evaluateDetailed(code, c = {}, overrides = {}) {
   const self = layerObject({ name: '1 Layer', ...c.thisLayer }, ctx);
   const layers = Object.fromEntries(Object.entries(c.layers ?? {}).map(([n, l]) => [n, layerObject({ name: n, ...l }, ctx)]));
   const probes = {};
+  // Markers may be plain times or { time, duration, comment }.
+  const markerKey = (i) => {
+    const m = markers[i - 1];
+    return typeof m === 'number' ? { time: m, index: i, duration: 0, comment: '' } : { duration: 0, comment: '', ...m, index: i };
+  };
+  const markerTime = (m) => (typeof m === 'number' ? m : m.time);
 
   const keyValue = (t) => {
     if (!keys.length) return ctx.value;
@@ -153,18 +161,40 @@ export function evaluateDetailed(code, c = {}, overrides = {}) {
       },
     },
     thisLayer: self,
-    thisProperty: property(keyValue, ctx),
+    thisProperty: {
+      ...property(keyValue, ctx),
+      // AE 26: the key at/before t (first key if none), and the key after t (last key if none).
+      previousKey: (t) => {
+        if (!keys.length) throw new Error('previousKey needs keyframes on the property');
+        const k = [...keys].reverse().find((x) => x.time <= t) ?? keys[0];
+        return { time: k.time, value: k.value, index: keys.indexOf(k) + 1 };
+      },
+      nextKey: (t) => {
+        if (!keys.length) throw new Error('nextKey needs keyframes on the property');
+        const k = keys.find((x) => x.time > t) ?? keys.at(-1);
+        return { time: k.time, value: k.value, index: keys.indexOf(k) + 1 };
+      },
+    },
     parent: c.parent ? layerObject(c.parent, ctx) : undefined,
     hasParent: !!c.parent,
     transform: self.transform,
     effect: self.effect,
+    toComp: self.toComp,
+    fromComp: self.fromComp,
+    toWorld: self.toWorld,
+    fromWorld: self.fromWorld,
     marker: {
       numKeys: markers.length,
-      key: (i) => ({ time: markers[i - 1], index: i, duration: 0, comment: '' }),
+      key: (i) => markerKey(i),
+      previousKey: (t) => {
+        let i = markers.length;
+        while (i > 1 && markers[i - 1] > t) i--;
+        return markerKey(i);
+      },
       nearestKey: (t) => {
         let best = 0;
-        markers.forEach((m, i) => { if (Math.abs(m - t) < Math.abs(markers[best] - t)) best = i; });
-        return { time: markers[best], index: best + 1 };
+        markers.forEach((m, i) => { if (Math.abs(markerTime(m) - t) < Math.abs(markerTime(markers[best]) - t)) best = i; });
+        return markerKey(best + 1);
       },
     },
     linear: (t, a, b, v1, v2) => interp(t, a, b, v1, v2, (u) => u),
@@ -206,7 +236,9 @@ export function evaluateDetailed(code, c = {}, overrides = {}) {
   const last = lines.pop() ?? 'undefined';
   const names = Object.keys(env);
   const fn = new Function(...names, `"use strict";\n${lines.join('\n')}\nreturn (${last});`);
-  const value = fn(...names.map((n) => env[n]));
+  let value = fn(...names.map((n) => env[n]));
+  // Like AE, an expression that ends in a property object resolves to its value.
+  if (value && typeof value === 'object' && !Array.isArray(value) && 'valueAtTime' in value) value = value.value;
   return { value, probes };
 }
 

@@ -1,0 +1,64 @@
+{
+  "version": 1,
+  "globals": {
+    "ctrls": {
+      "layerName": "GLOBALS"
+    },
+    "layers": [],
+    "controls": [],
+    "comps": []
+  },
+  "graphs": [
+    {
+      "id": "wiggle-between",
+      "name": "Wiggle Between Two Values",
+      "target": {
+        "id": "opacity"
+      },
+      "nodes": [
+        {
+          "id": "x",
+          "type": "anim.wiggleRange",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "inputs": {
+            "min": 20,
+            "max": 80
+          },
+          "params": {}
+        },
+        {
+          "id": "out",
+          "type": "output",
+          "position": {
+            "x": 320,
+            "y": 0
+          },
+          "inputs": {},
+          "params": {}
+        }
+      ],
+      "edges": [
+        {
+          "id": "x.out-out.in",
+          "from": {
+            "node": "x",
+            "port": "out"
+          },
+          "to": {
+            "node": "out",
+            "port": "in"
+          }
+        }
+      ]
+    }
+  ],
+  "settings": {
+    "aeTarget": 26,
+    "useMatchNames": false,
+    "comments": "minimal",
+    "embedGraph": true
+  }
+}

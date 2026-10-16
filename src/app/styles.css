@@ -321,3 +321,20 @@ kbd { font: 11px ui-monospace, Menlo, monospace; border: 1px solid var(--border)
 .gcontrol input[aria-label='Effect name'] { width: 180px; }
 .gadd { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
 .grow-row { display: flex; gap: 6px; align-items: center; }
+
+/* Custom nodes */
+.custom-mark { color: var(--warning); }
+.custom-layout { display: grid; grid-template-columns: 220px 1fr; gap: 12px; min-height: 0; overflow: hidden; }
+.custom-list { display: flex; flex-direction: column; gap: 4px; overflow-y: auto; }
+.custom-list label { display: flex; flex-direction: column; gap: 3px; margin-top: 8px; }
+.custom-item { display: flex; flex-direction: column; align-items: flex-start; background: transparent; color: var(--text); font-weight: 500; border: 1px solid transparent; text-align: left; }
+.custom-item.sel { border-color: var(--accent); background: var(--panel-2); }
+.custom-item .chip-cat { margin-left: 6px; }
+.custom-editor { display: flex; flex-direction: column; gap: 8px; min-width: 0; overflow-y: auto; }
+.json-editor .cm-editor { max-height: 46vh; font-size: 12px; border-radius: 6px; }
+.custom-problems { color: var(--error); font-size: 0.85rem; padding-left: 18px; list-style: disc; }
+.ok-text { color: var(--ok); margin: 0; }
+.make-macro { display: flex; flex-direction: column; gap: 4px; margin-top: 10px; }
+.make-macro input { flex: 1; }
+.menu-list { width: 220px; gap: 4px; }
+.menu-list button { text-align: left; border: 0; }

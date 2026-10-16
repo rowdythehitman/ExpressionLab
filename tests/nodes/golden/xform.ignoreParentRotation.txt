@@ -1,0 +1,6 @@
+// ExpressionLab · Rotation
+// Ignore Parent Rotation
+const ignoreParentRotation_r = hasParent ? value - parent.transform.rotation : value;
+const ignoreParentRotation = ignoreParentRotation_r;
+
+ignoreParentRotation

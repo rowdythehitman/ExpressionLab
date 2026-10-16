@@ -1,0 +1,9 @@
+// ExpressionLab · Position (2D)
+const nullLayer = thisComp.layer("3D Null");
+
+// Null In Comp
+const nullInComp = nullLayer.toComp([0, 0, 0]);
+// Screen Position
+const screenPosition = [nullInComp[0], nullInComp[1]];
+
+screenPosition

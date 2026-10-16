@@ -1,0 +1,13 @@
+// ExpressionLab · Opacity
+const GLOBALS = thisComp.layer("GLOBALS");
+
+// Show Layer
+const showLayer = GLOBALS.effect("Show Layer")("Menu");
+// Layer Number
+const layerNumber = parseInt(thisLayer.name, 10);
+// Is Selected
+const isSelected = (showLayer == layerNumber);
+// Result
+const result = (isSelected ? 100 : 0);
+
+result

@@ -1,0 +1,196 @@
+{
+  "version": 1,
+  "globals": {
+    "ctrls": {
+      "layerName": "GLOBALS"
+    },
+    "layers": [
+      {
+        "id": "l-lead",
+        "key": "leaderLayer",
+        "layerName": "Leader",
+        "is3D": false,
+        "kind": "other"
+      }
+    ],
+    "controls": [
+      {
+        "id": "c-delay",
+        "effectName": "Delay (s)",
+        "type": "slider",
+        "host": "ctrls",
+        "previewValue": 0.5
+      }
+    ],
+    "comps": []
+  },
+  "graphs": [
+    {
+      "id": "delay-slider",
+      "name": "Delay Keyframes with Slider",
+      "target": {
+        "id": "position2D"
+      },
+      "nodes": [
+        {
+          "id": "lead",
+          "type": "ref.layer",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "inputs": {},
+          "params": {},
+          "ref": {
+            "layerId": "l-lead"
+          }
+        },
+        {
+          "id": "prop",
+          "type": "ref.property",
+          "position": {
+            "x": 250,
+            "y": 0
+          },
+          "inputs": {},
+          "params": {},
+          "ref": {
+            "propertyPath": "transform.position"
+          },
+          "name": "Leader Position"
+        },
+        {
+          "id": "t",
+          "type": "ctx.time",
+          "position": {
+            "x": 0,
+            "y": 150
+          },
+          "inputs": {},
+          "params": {}
+        },
+        {
+          "id": "delay",
+          "type": "ref.control",
+          "position": {
+            "x": 0,
+            "y": 250
+          },
+          "inputs": {},
+          "params": {},
+          "ref": {
+            "controlId": "c-delay"
+          }
+        },
+        {
+          "id": "when",
+          "type": "math.op",
+          "position": {
+            "x": 250,
+            "y": 200
+          },
+          "inputs": {},
+          "params": {
+            "op": "sub"
+          },
+          "name": "Delayed Time"
+        },
+        {
+          "id": "vat",
+          "type": "anim.valueAtTime",
+          "position": {
+            "x": 500,
+            "y": 100
+          },
+          "inputs": {},
+          "params": {},
+          "name": "Delayed Position"
+        },
+        {
+          "id": "out",
+          "type": "output",
+          "position": {
+            "x": 750,
+            "y": 100
+          },
+          "inputs": {},
+          "params": {}
+        }
+      ],
+      "edges": [
+        {
+          "id": "lead.out-prop.layer",
+          "from": {
+            "node": "lead",
+            "port": "out"
+          },
+          "to": {
+            "node": "prop",
+            "port": "layer"
+          }
+        },
+        {
+          "id": "prop.prop-vat.prop",
+          "from": {
+            "node": "prop",
+            "port": "prop"
+          },
+          "to": {
+            "node": "vat",
+            "port": "prop"
+          }
+        },
+        {
+          "id": "t.out-when.a",
+          "from": {
+            "node": "t",
+            "port": "out"
+          },
+          "to": {
+            "node": "when",
+            "port": "a"
+          }
+        },
+        {
+          "id": "delay.out-when.b",
+          "from": {
+            "node": "delay",
+            "port": "out"
+          },
+          "to": {
+            "node": "when",
+            "port": "b"
+          }
+        },
+        {
+          "id": "when.out-vat.t",
+          "from": {
+            "node": "when",
+            "port": "out"
+          },
+          "to": {
+            "node": "vat",
+            "port": "t"
+          }
+        },
+        {
+          "id": "vat.out-out.in",
+          "from": {
+            "node": "vat",
+            "port": "out"
+          },
+          "to": {
+            "node": "out",
+            "port": "in"
+          }
+        }
+      ]
+    }
+  ],
+  "settings": {
+    "aeTarget": 26,
+    "useMatchNames": false,
+    "comments": "minimal",
+    "embedGraph": true
+  }
+}

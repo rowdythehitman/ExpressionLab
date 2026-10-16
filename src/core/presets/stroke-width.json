@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "globals": {
+    "ctrls": {
+      "layerName": "GLOBALS"
+    },
+    "layers": [],
+    "controls": [],
+    "comps": []
+  },
+  "graphs": [
+    {
+      "id": "stroke-width",
+      "name": "Maintain Stroke Width",
+      "target": {
+        "id": "shapeStrokeWidth"
+      },
+      "nodes": [
+        {
+          "id": "x",
+          "type": "xform.maintainStrokeWidth",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "inputs": {},
+          "params": {}
+        },
+        {
+          "id": "out",
+          "type": "output",
+          "position": {
+            "x": 320,
+            "y": 0
+          },
+          "inputs": {},
+          "params": {}
+        }
+      ],
+      "edges": [
+        {
+          "id": "x.out-out.in",
+          "from": {
+            "node": "x",
+            "port": "out"
+          },
+          "to": {
+            "node": "out",
+            "port": "in"
+          }
+        }
+      ]
+    }
+  ],
+  "settings": {
+    "aeTarget": 26,
+    "useMatchNames": false,
+    "comments": "minimal",
+    "embedGraph": true
+  }
+}

@@ -1,0 +1,8 @@
+// ExpressionLab · Source Text
+// Current Date
+const currentDate_d = new Date();
+const currentDate_pad = (n) => String(n).padStart(2, "0");
+const currentDate_months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const currentDate = `${currentDate_d.getDate()} ${currentDate_months[currentDate_d.getMonth()]} ${currentDate_d.getFullYear()}`;
+
+currentDate

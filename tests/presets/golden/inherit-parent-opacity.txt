@@ -1,0 +1,5 @@
+// ExpressionLab · Opacity
+// Inherit Parent Opacity
+const inheritParentOpacity = (hasParent ? (parent.transform.opacity * value) / 100 : value);
+
+inheritParentOpacity

@@ -1,7 +1,8 @@
 // Compiler pipeline entry point (spec §7). Graph in, string + diagnostics out.
 import { PROPERTIES, TARGETS } from '../catalog';
 import { CONTROLS } from '../catalog/controls';
-import { NODE_DEFS } from '../nodes';
+import { nodeLibrary } from '../library';
+import { expandMacros, hasMacros, type Expansion } from '../macro';
 import { projectSchema } from '../schema';
 import { paramValue, resolveTypes, type Incoming, type NodeTypes } from '../typing/resolve';
 import type {
@@ -27,13 +28,35 @@ export interface CompileOptions {
 
 export function compile(input: Project | unknown, graphId: string, opts: CompileOptions = {}): CompileResult {
   const diag = new DiagnosticBag();
-  const result = (code = '', sourceMap: SourceMap = {}, variables: Record<string, string[]> = {}): CompileResult => ({
-    code: diag.hasErrors ? '' : code,
-    diagnostics: diag.items,
-    checklist: diag.checklist,
-    sourceMap: diag.hasErrors ? {} : sourceMap,
-    variables: diag.hasErrors ? {} : variables,
-  });
+  // Set when the graph contains macros: results are reported against the macro instance, not its insides.
+  let expansion: Expansion | null = null;
+  const result = (code = '', sourceMap: SourceMap = {}, variables: Record<string, string[]> = {}): CompileResult => {
+    if (expansion) {
+      const top = (id: string) => expansion!.origin.get(id) ?? id;
+      for (const d of diag.items) {
+        if (d.nodeId) d.nodeId = top(d.nodeId);
+        if (d.edgeId?.includes('/')) delete d.edgeId; // an edge inside a macro
+        else if (d.edgeId?.includes('>')) d.edgeId = d.edgeId.slice(0, d.edgeId.indexOf('>'));
+      }
+      const merged: SourceMap = {};
+      for (const [id, [a, b]] of Object.entries(sourceMap)) {
+        const t = top(id);
+        const cur = merged[t];
+        merged[t] = cur ? [Math.min(cur[0], a), Math.max(cur[1], b)] : [a, b];
+      }
+      sourceMap = merged;
+      const vars: Record<string, string[]> = {};
+      for (const [id, vs] of Object.entries(variables)) vars[top(id)] = [...(vars[top(id)] ?? []), ...vs];
+      variables = vars;
+    }
+    return {
+      code: diag.hasErrors ? '' : code,
+      diagnostics: diag.items,
+      checklist: diag.checklist,
+      sourceMap: diag.hasErrors ? {} : sourceMap,
+      variables: diag.hasErrors ? {} : variables,
+    };
+  };
 
   // ---- 1. Validate structure ----
   const parsed = projectSchema.safeParse(input);
@@ -44,19 +67,30 @@ export function compile(input: Project | unknown, graphId: string, opts: Compile
     return result();
   }
   const project = parsed.data as Project;
-  const graph = project.graphs.find((g) => g.id === graphId);
-  if (!graph) {
+  const sourceGraph = project.graphs.find((g) => g.id === graphId);
+  if (!sourceGraph) {
     diag.add('INVALID_PROJECT', `No graph with id "${graphId}"`);
     return result();
   }
-  const target = TARGETS.get(graph.target.id);
-  const valueType = target?.valueType ?? graph.target.valueType;
+  const target = TARGETS.get(sourceGraph.target.id);
+  const valueType = target?.valueType ?? sourceGraph.target.valueType;
   if (!target || !valueType) {
-    diag.add('INVALID_PROJECT', target ? `Target "${target.label}" needs a value type` : `Unknown target "${graph.target.id}"`);
+    diag.add('INVALID_PROJECT', target ? `Target "${target.label}" needs a value type` : `Unknown target "${sourceGraph.target.id}"`);
     return result();
   }
 
-  const defsLib = opts.nodeDefs ?? NODE_DEFS;
+  const defsLib = opts.nodeDefs ?? nodeLibrary(project);
+  // Macros compile as their expanded sub-graphs.
+  if (hasMacros(sourceGraph, defsLib)) expansion = expandMacros(sourceGraph, defsLib);
+  for (const [id, msg] of expansion?.errors ?? []) diag.add('UNKNOWN_NODE_TYPE', msg, { nodeId: id });
+  if (diag.hasErrors) return result();
+  const graph = expansion?.graph ?? sourceGraph;
+  // Preview overrides/probes on a macro output refer to the inner node that produces it.
+  const overrideAlias = new Map<string, string>();
+  for (const k of opts.preview?.overrides ?? []) {
+    const inner = expansion?.outputs.get(k);
+    if (inner) overrideAlias.set(inner, k);
+  }
   const defs = new Map<string, NodeDef>();
   const seen = new Set<string>();
   for (const n of graph.nodes) {
@@ -303,7 +337,11 @@ export function compile(input: Project | unknown, graphId: string, opts: Compile
         return p.emit === 'string' ? JSON.stringify(String(v)) : formatLiteral(v, 'raw');
       },
       local: (id) => localNames.get(n.id)?.get(id),
-      ref: (id) => (id === 'path' ? PROPERTIES.get(n.ref?.propertyPath ?? '')?.path : undefined),
+      ref: (id) => {
+        if (id === 'path') return PROPERTIES.get(n.ref?.propertyPath ?? '')?.path;
+        const c = id === 'control' ? controlFor(n) : undefined;
+        return c ? controlExpr(c, ctrlsVar, layerVars, project.settings) : undefined;
+      },
     };
   };
   const renderTpl = (n: NodeInstance, text: string) => {
@@ -315,9 +353,11 @@ export function compile(input: Project | unknown, graphId: string, opts: Compile
   };
   const renderOutput = (n: NodeInstance, port: string): string => {
     const d = def(n);
-    const key = `${n.id}:${port}`;
+    const key = overrideAlias.get(`${n.id}:${port}`) ?? `${n.id}:${port}`;
     if (opts.preview?.overrides?.has(key)) return `__in(${JSON.stringify(key)})`;
-    if (d.special === 'ref.control') return controlExpr(controlFor(n)!, ctrlsVar, layerVars, project.settings);
+    if (d.special === 'ref.control' && !d.outputs.find((x) => x.id === port)?.expr) {
+      return controlExpr(controlFor(n)!, ctrlsVar, layerVars, project.settings);
+    }
     if (d.special === 'ref.layer') return layerVars.get(n.ref!.layerId!)!;
     const o = d.outputs.find((x) => x.id === port)!;
     return renderTpl(n, pickBranch(o.expr, scopeFor(n)));
@@ -336,7 +376,11 @@ export function compile(input: Project | unknown, graphId: string, opts: Compile
     const start = lines.length + 1;
     const vars = [...varNames.get(n.id)!];
     if (comments === 'verbose' || (comments === 'minimal' && vars.length)) lines.push(`// ${labelOf(n)}`);
-    for (const s of d.statements ?? []) lines.push(renderTpl(n, pickBranch(s, scopeFor(n))));
+    for (const s of d.statements ?? []) {
+      // A statement template may span several lines, or render empty (an optional branch).
+      const text = renderTpl(n, pickBranch(s, scopeFor(n)));
+      if (text.trim()) lines.push(...text.split('\n'));
+    }
     for (const [port, v] of vars) lines.push(`const ${v} = ${renderOutput(n, port)};`);
     sourceMap[n.id] = [start, lines.length];
   };
@@ -346,13 +390,23 @@ export function compile(input: Project | unknown, graphId: string, opts: Compile
   if (restSection.some((n) => !isInline(n))) lines.push('');
 
   // Preview probes: report each probed node's outputs just before the result.
-  for (const id of opts.preview?.probes ?? []) {
+  const probe = (key: string, id: string, port: string) => {
     const n = nodeById.get(id);
-    if (!n || !reached.has(id) || def(n).special === 'output') continue;
-    for (const o of def(n).outputs) {
-      const v = varNames.get(id)?.get(o.id) ?? renderOutput(n, o.id);
-      lines.push(`__probe(${JSON.stringify(`${id}:${o.id}`)}, ${v});`);
+    if (!n || !reached.has(id) || def(n).special === 'output') return;
+    const v = varNames.get(id)?.get(port) ?? renderOutput(n, port);
+    lines.push(`__probe(${JSON.stringify(key)}, ${v});`);
+  };
+  for (const id of opts.preview?.probes ?? []) {
+    const macroOuts = [...(expansion?.outputs ?? [])].filter(([k]) => k.startsWith(`${id}:`));
+    if (macroOuts.length) {
+      for (const [k, inner] of macroOuts) {
+        const i = inner.lastIndexOf(':');
+        probe(k, inner.slice(0, i), inner.slice(i + 1));
+      }
+      continue;
     }
+    const n = nodeById.get(id);
+    if (n) for (const o of def(n).outputs) probe(`${id}:${o.id}`, id, o.id);
   }
 
   const final = edgeInto(outputNode, 'in');

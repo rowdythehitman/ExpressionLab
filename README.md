@@ -10,7 +10,7 @@ clean, readable AE expression that you paste into After Effects. Fully client-si
 
 ## Status
 
-**Phases 0, 1 and 2 are done.**
+**Phases 0–3 are done.**
 
 - **Editor:** a node canvas (React Flow) with typed ports. Each port type has its own colour and shape, and unconnected
   inputs get inline widgets. A wrong-type connection is refused with the reason and a one-click converter quick-fix.
@@ -33,7 +33,11 @@ clean, readable AE expression that you paste into After Effects. Fully client-si
   - clickable diagnostics and the setup checklist.
 - **Paste-back:** pasting a copied expression into the app restores its graph as a new tab. If the code was edited by
   hand, you get a warning first.
-- **Palette and presets:** 72 nodes, including text-selector Stagger, Typewriter and Index Ramp, and six presets.
+- **Palette and presets:** 86 nodes, including parent-fix, layout, marker, date and AE 26 nodes, and 24 grouped presets
+  covering the §11 library.
+- **Custom nodes and macros:** write your own nodes as JSON (validated live), or select nodes and **Make macro**
+  to get a reusable node; **Ungroup** puts them back. Both travel with copy/paste and the embedded payload.
+- **AE setup script:** download a `.jsx` that creates the GLOBALS null, null layers and every control in your comp.
 - **Projects:** `.aenodes.json` open and save, autosave to IndexedDB, undo/redo, and an optional inlining pass.
 
 The compiler (`src/core`) is pure TypeScript with no React or DOM code. Its tests cover:
@@ -45,8 +49,7 @@ The compiler (`src/core`) is pure TypeScript with no React or DOM code. Its test
 
 Manual checks for real After Effects are in [`docs/ae-verification.md`](docs/ae-verification.md).
 
-Next: Phase 3 (remaining presets, user-defined nodes, sub-graph macros, AE 26 nodes, `.jsx` setup generator, curve
-preview).
+Next: the After Effects panel (CEP/ZXP).
 
 ## Develop
 

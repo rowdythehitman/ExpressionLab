@@ -11,6 +11,8 @@ const SPEC_ITEMS = [
   'Vector maths: `add`, `sub`, `mul(vec, n)`, `div(vec, n)` and the element-wise `.map((v, i) => ...)` forms evaluate as expected (decisions #15).',
   '`toComp` / `fromComp` / `toWorld` / `fromWorld` return a point with the same number of dimensions as their input (decisions #26).',
   'Pasting an expression that ends with `//@ae-nodes:v1:...` into AE works unchanged (the payload is just a comment).',
+  'The setup script (Globals › AE setup script) run on a comp creates the GLOBALS null, missing null layers and every control (with dropdown items and preview values), skips ones that already exist, and undoes in one step.',
+  'Dropdown controls compare with numbers as expected (`menu == 2`) and `.text` (Dropdown Text node) reads the item label in AE 26.',
   ...Object.values(CONTROLS).map(
     (c) => `Match name \`${c.matchName}\` reads ${/^[AEIOU]/.test(c.label) ? 'an' : 'a'} ${c.label} (Settings → Use match names), and the display name \`${c.paramName}\` does too.`,
   ),

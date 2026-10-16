@@ -1,9 +1,8 @@
 // Quick-add search at the cursor: Tab or double-click on the canvas, or drop a wire into empty space.
 // With a wire, only nodes that can take it are listed, and the new node arrives already connected.
 import { useMemo, useState } from 'react';
-import { NODE_DEFS } from '../../core';
 import { compatiblePort, disabledReason, searchDefs } from '../nodeSearch';
-import { actions, useGraph, useStore, type PendingWire } from '../store';
+import { actions, useDefs, useGraph, useStore, type PendingWire } from '../store';
 
 export interface QuickAddAt {
   /** Screen position of the popover, relative to the canvas element. */
@@ -21,20 +20,21 @@ export function QuickAdd({ at, onClose }: { at: QuickAddAt; onClose: () => void 
   const graph = useGraph();
   const project = useStore((s) => s.project);
   const aeTarget = project.settings.aeTarget;
+  const defs = useDefs();
 
   // Which port of each node the dangling wire would connect to (computed once per open).
   const ports = useMemo(() => {
     if (!at.wire) return null;
     const m = new Map<string, string>();
-    for (const d of NODE_DEFS.values()) {
-      if (disabledReason(d, graph, aeTarget)) continue;
-      const port = compatiblePort(project, graph, d, at.wire);
+    for (const d of defs.values()) {
+      if (disabledReason(d, graph, aeTarget, defs)) continue;
+      const port = compatiblePort(project, graph, d, at.wire, defs);
       if (port) m.set(d.id, port);
     }
     return m;
-  }, [at.wire, project, graph, aeTarget]);
+  }, [at.wire, project, graph, aeTarget, defs]);
 
-  const results = searchDefs(q).filter((d) => !ports || ports.has(d.id)).slice(0, 12);
+  const results = searchDefs(q, defs).filter((d) => !ports || ports.has(d.id)).slice(0, 12);
 
   const add = (type: string) => {
     // Inputs sit on a node's left, so a node fed by the wire is placed to the right of the drop point.
@@ -47,7 +47,7 @@ export function QuickAdd({ at, onClose }: { at: QuickAddAt; onClose: () => void 
 
   const portLabel = (type: string) => {
     const port = ports?.get(type);
-    const d = NODE_DEFS.get(type);
+    const d = defs.get(type);
     if (!port || !d) return null;
     return (at.wire?.side === 'source' ? d.inputs.find((p) => p.id === port) : d.outputs.find((o) => o.id === port))?.label;
   };
@@ -68,13 +68,13 @@ export function QuickAdd({ at, onClose }: { at: QuickAddAt; onClose: () => void 
           else if (e.key === 'ArrowUp') { e.preventDefault(); setActive((a) => Math.max(a - 1, 0)); }
           else if (e.key === 'Enter') {
             const d = results[active];
-            if (d && !disabledReason(d, graph, aeTarget)) add(d.id);
+            if (d && !disabledReason(d, graph, aeTarget, defs)) add(d.id);
           }
         }}
       />
       <ul role="listbox">
         {results.map((d, i) => {
-          const reason = disabledReason(d, graph, aeTarget);
+          const reason = disabledReason(d, graph, aeTarget, defs);
           const via = portLabel(d.id);
           return (
             <li

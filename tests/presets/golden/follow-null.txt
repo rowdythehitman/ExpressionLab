@@ -1,0 +1,7 @@
+// ExpressionLab · Position (2D)
+const controllerLayer = thisComp.layer("Controller");
+
+// Null Position
+const nullPosition = controllerLayer.toComp([0, 0]);
+
+nullPosition

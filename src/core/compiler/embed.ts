@@ -1,7 +1,24 @@
 // Embedded graph payload and paste-back (spec §8).
 // Last line of the output: //@ae-nodes:v1:<base64url(deflate-raw(JSON{ graph, globals, bodyHash }))>
 import { globalsSchema, graphSchema } from '../schema';
-import type { Globals, Graph, Project } from '../types';
+import { nodeDefSchema } from '../schema';
+import type { Globals, Graph, NodeDef, NodeInstance, Project } from '../types';
+
+/** The project's custom nodes used by `nodes`, including those used inside macros (transitively). */
+export function customNodesUsed(project: Pick<Project, 'customNodes'>, nodes: NodeInstance[]): NodeDef[] {
+  const byId = new Map((project.customNodes ?? []).map((d) => [d.id, d]));
+  const out = new Map<string, NodeDef>();
+  const visit = (list: NodeInstance[]) => {
+    for (const n of list) {
+      const d = byId.get(n.type);
+      if (!d || out.has(d.id)) continue;
+      out.set(d.id, d);
+      if (d.macro) visit(d.macro.nodes);
+    }
+  };
+  visit(nodes);
+  return [...out.values()];
+}
 
 export const PAYLOAD_PREFIX = '//@ae-nodes:';
 export const PAYLOAD_VERSION = 1;
@@ -12,11 +29,14 @@ export interface PayloadV1 {
   graph: Graph;
   globals: Globals;
   bodyHash: string;
+  /** User-defined nodes/macros the graph uses (optional: older payloads don't have it). */
+  customNodes?: NodeDef[];
 }
 
 export interface DecodedPayload {
   graph: Graph;
   globals: Globals;
+  customNodes?: NodeDef[];
   /** True when the code above the payload no longer matches what the tool generated. */
   bodyEdited: boolean;
 }
@@ -43,7 +63,9 @@ export function hashBody(body: string): string {
 }
 
 /** The globals a graph references: CTRLS plus the layers and controls its nodes use. */
-export function globalsSubset(globals: Globals, graph: Graph): Globals {
+export function globalsSubset(globals: Globals, graph: Graph, customNodes: NodeDef[] = []): Globals {
+  const macroNodes = customNodes.flatMap((d) => d.macro?.nodes ?? []);
+  graph = { ...graph, nodes: [...graph.nodes, ...macroNodes] };
   const controlIds = new Set(graph.nodes.map((n) => n.ref?.controlId).filter(Boolean));
   const controls = globals.controls.filter((c) => controlIds.has(c.id));
   const layerIds = new Set<string>(graph.nodes.map((n) => n.ref?.layerId).filter((x): x is string => !!x));
@@ -75,7 +97,13 @@ function fromBase64Url(s: string): Uint8Array {
 
 /** Builds the payload line for `code` (the compiled expression without a payload). */
 export async function encodePayload(project: Project, graph: Graph, code: string): Promise<string> {
-  const payload: PayloadV1 = { graph, globals: globalsSubset(project.globals, graph), bodyHash: hashBody(code) };
+  const custom = customNodesUsed(project, graph.nodes);
+  const payload: PayloadV1 = {
+    graph,
+    globals: globalsSubset(project.globals, graph, custom),
+    bodyHash: hashBody(code),
+    ...(custom.length ? { customNodes: custom } : {}),
+  };
   const packed = await pipe(new TextEncoder().encode(JSON.stringify(payload)), new CompressionStream('deflate-raw'));
   return `${PAYLOAD_PREFIX}v${PAYLOAD_VERSION}:${toBase64Url(packed)}`;
 }
@@ -120,8 +148,15 @@ export async function decodePayload(text: string): Promise<DecodedPayload | null
   if (!graph.success || !globals.success || typeof obj.bodyHash !== 'string') {
     throw new Error('The embedded graph is not valid');
   }
+  const custom = obj.customNodes === undefined ? undefined : nodeDefSchema.array().safeParse(obj.customNodes);
+  if (custom && !custom.success) throw new Error('The embedded graph is not valid');
   const body = text.slice(0, m.index);
-  return { graph: graph.data as Graph, globals: globals.data as Globals, bodyEdited: hashBody(body) !== obj.bodyHash };
+  return {
+    graph: graph.data as Graph,
+    globals: globals.data as Globals,
+    customNodes: custom?.data as NodeDef[] | undefined,
+    bodyEdited: hashBody(body) !== obj.bodyHash,
+  };
 }
 
 /**
@@ -133,6 +168,10 @@ export function importGraph(project: Project, decoded: DecodedPayload, newId: ()
   const has = <T extends { id: string }>(xs: T[], id: string) => xs.some((x) => x.id === id);
   for (const l of decoded.globals.layers) if (!has(p.globals.layers, l.id)) p.globals.layers.push(l);
   for (const c of decoded.globals.controls) if (!has(p.globals.controls, c.id)) p.globals.controls.push(c);
+  for (const d of decoded.customNodes ?? []) {
+    p.customNodes ??= [];
+    if (!has(p.customNodes, d.id)) p.customNodes.push(d);
+  }
   const graph = structuredClone(decoded.graph);
   if (p.graphs.some((g) => g.id === graph.id)) graph.id = newId();
   if (p.graphs.some((g) => g.name === graph.name)) graph.name = `${graph.name} (imported)`;

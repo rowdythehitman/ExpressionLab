@@ -125,3 +125,53 @@ Choices made where the spec (docs/SPEC.md) said "decide" or was ambiguous. Newes
 47. **Globals are edited in a dialog** opened from the Globals button or any chip. It has a card for the GLOBALS null,
     one for "this layer", and one per layer, each listing its controls with add/rename/retype/move/delete, plus comps.
     Deleting a layer moves its controls onto the GLOBALS null instead of dropping them.
+
+## Phase 3a
+
+48. **New nodes** (all with golden outputs, ES-parse checks and mock-runtime tests):
+    - Ignore Parent Rotation / Scale (optional whole-chain walk; a 0% parent axis is skipped rather than dividing by
+      zero) and Inherit Parent Opacity;
+    - Scale to Width, Max Width Scale and Maintain Stroke Width;
+    - Wiggle Between (`wiggle(f, (max-min)/2, 1) - value + mid`, which fixes the library snippet's undefined
+      `f`/`a` and missing `- value`);
+    - Loop Path Keyframes (cycle via `valueAtTime`, because `loopOut` doesn't work on paths);
+    - Current Marker (time, duration, comment, passed);
+    - Current Date (five formats; render-time date);
+    - AE 26 nodes, gated by Settings › AE version: Previous/Next Keyframe, Previous Marker and Dropdown Text.
+49. **NodeDef extensions:** a statement template may span several lines or render empty (an optional branch).
+    `{{ref.control}}` gives the control's expression inside a template. `controlTypes` limits which controls a
+    `ref.control` node accepts, and filters its picker.
+50. **Presets:** there are now 24, covering the §11 library, in six menu groups. Their metadata (group and AE
+    expectation) lives in `presets/index.ts`, and the files are loaded with `import.meta.glob`.
+51. **Setup script:** `generateSetupScript(project)` emits ES3 ExtendScript, parse-checked with acorn at
+    `ecmaVersion: 3` for every preset. It creates the GLOBALS null and missing null layers, warns about other missing
+    layers instead of guessing their content, and adds every control by effect match name, with dropdown items
+    (`setPropertyParameters`, AE 17.0.1+) and preview values. Controls on "this layer" go on the selected layers.
+    Existing ones are skipped, everything is one undo group, and it ends with a report. Download it from the Globals
+    dialog or the setup checklist.
+52. **Mock runtime** now models AE's property coercion (a property used in arithmetic, or as the final result, gives
+    its value), `toComp` and friends as globals, `previousKey`/`nextKey`, and markers with duration and comment.
+
+## Phase 3b
+
+53. **User-defined nodes** live in `Project.customNodes` (an optional field, so old files stay valid). Ids must
+    start with `user.`, and a custom node can never replace a built-in. `nodeLibrary(project)` merges them;
+    compile, analysis, connection checks, the palette, quick-add and the inspector all use it.
+    `validateCustomNode` adds checks the schema can't express: every `{{in/param/local}}` placeholder must refer to
+    something declared, `when` conditions must parse, the last branch must be the fallback, and select defaults
+    must be valid. The editor shows these problems live.
+54. **Macros** are custom nodes with a `macro` body (inner nodes and edges, input fan-out targets, output
+    mappings).
+    - **Compiling:** macros are expanded before compiling and type analysis, nested up to 8 levels deep; a macro
+      containing itself is an error. Diagnostics, source lines, variables and preview probes and overrides are all
+      mapped back to the instance.
+    - **Naming:** inner variables are prefixed with the macro's name (`shakerWiggle`); control refs keep their
+      effect name.
+    - **Making one:** "Make macro" creates one input per distinct upstream source and one output per distinct inner
+      output, using the resolved port types. Wrapping a whole preset in a macro gives the same evaluated result;
+      the tests check this for every preset.
+    - **Ungroup:** puts the nodes back, carrying any literal values from the instance.
+55. **Portability:** the embedded payload and the node clipboard carry the custom nodes a graph uses (including
+    those inside macros), with globals from macro bodies. On import they merge by id, and existing definitions win.
+56. **Top bar:** Open, Save, Paste expression and the setup script moved into a **File** menu so the bar fits on one
+    line next to the new **★ Custom nodes** button.

@@ -4,6 +4,7 @@ import { Canvas } from './components/Canvas';
 import { GlobalsStrip } from './components/GlobalsStrip';
 import { GraphTabs } from './components/GraphTabs';
 import { ImportDialog } from './components/ImportDialog';
+import { CustomNodesDialog } from './components/CustomNodesDialog';
 import { Palette } from './components/Palette';
 import { RightPanel } from './components/RightPanel';
 import { TopBar } from './components/TopBar';
@@ -16,6 +17,7 @@ function isTyping(e: KeyboardEvent): boolean {
 
 export function App() {
   const [importSignal, setImportSignal] = useState(0);
+  const customDialog = useStore((s) => s.customDialog);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const mod = e.metaKey || e.ctrlKey;
@@ -47,6 +49,9 @@ export function App() {
           <RightPanel />
         </main>
         <ImportDialog openSignal={importSignal} />
+        {customDialog && (
+          <CustomNodesDialog focusId={customDialog.focusId} onClose={() => useStore.setState({ customDialog: null })} />
+        )}
       </div>
     </ReactFlowProvider>
   );

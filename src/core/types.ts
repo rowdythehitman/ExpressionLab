@@ -77,10 +77,24 @@ export interface NodeDef {
   special?: SpecialKind;
   /** Substitute the expression where it's used instead of emitting a `const` (refs, literals). */
   inline?: boolean;
+  /** For ref.control nodes: the control types this node can read (e.g. dropdown-only `.text`). */
+  controlTypes?: ControlType[];
+  /**
+   * A user macro: the node is a saved sub-graph, expanded before compiling. Each macro input feeds one or more
+   * inner input ports; each macro output reads one inner output port.
+   */
+  macro?: MacroBody;
   /** Never fold into the consumer, e.g. nodes whose result depends on random-seed state (wiggle). */
   noInline?: boolean;
   source?: string;
   verify?: string;
+}
+
+export interface MacroBody {
+  nodes: NodeInstance[];
+  edges: Edge[];
+  inputs: Array<{ id: string; targets: Array<{ node: string; port: string }> }>;
+  outputs: Array<{ id: string; node: string; port: string }>;
 }
 
 export interface NodeInstance {
@@ -139,7 +153,7 @@ export interface ControlGlobal {
   type: ControlType;
   host: ControlHost;
   dropdownItems?: string[];
-  /** Value the Output Preview uses for this control. */
+  /** Value the Output Preview uses for this control (and the .jsx setup script sets). */
   previewValue?: number | number[];
 }
 
@@ -164,6 +178,8 @@ export interface Project {
   globals: Globals;
   graphs: Graph[];
   settings: Settings;
+  /** User-defined nodes and macros (ids start with "user."). */
+  customNodes?: NodeDef[];
 }
 
 export interface TargetDef {

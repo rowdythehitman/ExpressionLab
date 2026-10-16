@@ -1,6 +1,6 @@
 // Golden output for every NodeDef with default inputs (spec §13.1).
 import { describe, expect, it } from 'vitest';
-import { analyzeGraph, compile, NODE_DEFS, type Graph, type NodeDef, type NodeInstance, type Project } from '../../src/core';
+import { analyzeGraph, compile, NODE_DEFS, TARGETS, type Graph, type NodeDef, type NodeInstance, type Project } from '../../src/core';
 import { isValidWhen } from '../../src/core/compiler/template';
 import { assertParses, edge, node, TARGET_FOR } from '../helpers';
 
@@ -9,7 +9,7 @@ function harness(def: NodeDef): Project {
   const nodes: NodeInstance[] = [node('n', def.id, 100, 0)];
   const edges: ReturnType<typeof edge>[] = [];
   const special: Record<string, unknown> = {};
-  if (def.special === 'ref.control') special.ref = { controlId: 'c1' };
+  if (def.special === 'ref.control') special.ref = { controlId: def.controlTypes?.includes('dropdown') ? 'c2' : 'c1' };
   if (def.special === 'ref.layer') special.ref = { layerId: 'l1' };
   if (def.special === 'ref.property') special.ref = { propertyPath: 'transform.opacity' };
   Object.assign(nodes[0]!, special);
@@ -48,14 +48,25 @@ function harness(def: NodeDef): Project {
       edges.push(edge('n', out.id, 'o', 'in'));
     }
   }
-  if (def.contexts?.includes('textSelectorAmount')) target = { id: 'textSelectorAmount' };
+  // Context-limited nodes get a target that provides their context; prefer one the node is named after
+  // (rotation, scale...) and whose type matches a fixed output type.
+  if (def.contexts) {
+    const id = def.id.toLowerCase();
+    const fits = [...TARGETS.values()].filter((t) => def.contexts!.some((c) => t.contexts.includes(c)))
+      .filter((t) => !out || out.type === 'V' || !t.valueType || t.valueType === out.type);
+    const named = fits.find((t) => id.includes(t.id.replace(/(2D|3D)$/, '').toLowerCase()));
+    target = { id: (named ?? fits[0]!).id };
+  }
 
   const project: Project = {
     version: 1,
     globals: {
       ctrls: { layerName: 'CTRLS' },
       layers: [{ id: 'l1', key: 'titleLayer', layerName: 'Title', is3D: false, kind: 'text' }],
-      controls: [{ id: 'c1', effectName: 'Amount', type: 'slider', host: 'ctrls' }],
+      controls: [
+        { id: 'c1', effectName: 'Amount', type: 'slider', host: 'ctrls' },
+        { id: 'c2', effectName: 'Style', type: 'dropdown', host: 'ctrls', dropdownItems: ['Bold', 'Thin'] },
+      ],
       comps: [],
     },
     graphs: [{ id: 'g', name: def.label, target, nodes, edges }],

@@ -40,7 +40,8 @@ test('paste-back imports the graph as a new tab, warning about hand edits', asyn
   await page.getByRole('button', { name: 'Load graph anyway' }).click();
   await expect(graphTabs(page).getByRole('tab')).toHaveCount(3);
 
-  await page.getByRole('button', { name: 'Paste expression' }).click();
+  await page.locator('summary', { hasText: 'File' }).click();
+  await page.getByRole('button', { name: 'Paste expression…' }).click();
   await page.getByRole('dialog').locator('textarea').fill('wiggle(2, 50)');
   await page.getByRole('dialog').getByRole('button', { name: 'Import' }).click();
   await expect(page.getByRole('alert')).toContainText('No embedded graph');
