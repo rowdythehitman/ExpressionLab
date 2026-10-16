@@ -105,8 +105,11 @@ test('inlining setting folds single-use values', async ({ page }) => {
 });
 
 test('autosave restores the project after a reload', async ({ page }) => {
-  await page.getByRole('button', { name: 'Add control' }).click();
-  await page.locator('.global-editor input').first().fill('Persisted Ctl');
+  await page.getByRole('button', { name: /Globals/ }).first().click();
+  const pinned = page.getByRole('dialog').getByRole('region', { name: 'Globals null' });
+  await pinned.getByRole('button', { name: 'Slider', exact: true }).click();
+  await pinned.getByLabel('Effect name').last().fill('Persisted Ctl');
+  await page.getByRole('dialog').getByRole('button', { name: 'Close' }).click();
   await page.waitForTimeout(700);
   await page.reload();
   await expect(page.locator('.chip', { hasText: 'Persisted Ctl' })).toBeVisible();

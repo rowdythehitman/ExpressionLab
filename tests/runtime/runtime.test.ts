@@ -104,7 +104,7 @@ describe('presets', () => {
 
   it('Control Property with Checkbox gates the value', () => {
     const p = preset('checkbox-control');
-    const ctx = (on: number): MockContext => ({ value: 80, layers: { CTRLS: { effects: { 'Enable/Checkbox': on } } } });
+    const ctx = (on: number): MockContext => ({ value: 80, layers: { GLOBALS: { effects: { 'Enable/Checkbox': on } } } });
     expect(run(p, ctx(1))).toBe(80);
     expect(run(p, ctx(0))).toBe(0);
   });
@@ -138,7 +138,7 @@ describe('presets', () => {
   it('Posterize Time + Wiggle wiggles around the value', () => {
     const p = preset('posterized-wiggle');
     const effects = { 'Stop Motion FPS/Slider': 8, 'Wiggle Freq/Slider': 2, 'Wiggle Amp/Slider': 30 };
-    const [x, y] = run(p, { time: 1.4, value: [100, 100], layers: { CTRLS: { effects } } }) as number[];
+    const [x, y] = run(p, { time: 1.4, value: [100, 100], layers: { GLOBALS: { effects } } }) as number[];
     expect(Math.abs(x! - 100)).toBeLessThanOrEqual(30);
     expect(Math.abs(y! - 100)).toBeLessThanOrEqual(30);
   });

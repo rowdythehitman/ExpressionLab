@@ -58,6 +58,14 @@ export function Canvas() {
       actions.paste(clip, m ? rf.screenToFlowPosition(m) : undefined);
     };
     const keys = (e: KeyboardEvent) => {
+      if (e.key === 'F2' && !inTextContext(e.target)) {
+        const id = useStore.getState().selectedNodeId;
+        if (id) {
+          e.preventDefault();
+          useStore.setState({ renamingId: id });
+        }
+        return;
+      }
       if (!(e.metaKey || e.ctrlKey) || e.shiftKey || inTextContext(e.target)) return;
       const k = e.key.toLowerCase();
       if (k === 'd') {

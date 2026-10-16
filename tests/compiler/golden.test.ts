@@ -20,10 +20,10 @@ describe('golden: posterized wiggle (spec §7.4)', () => {
     const texts = compile(goldenProject(), 'g1').checklist.map((c) => c.text);
     expect(texts).toEqual([
       'Apply to: Position',
-      "Layer 'CTRLS' must exist (a Null is ideal)",
-      "Add Slider Control 'Stop Motion FPS' to 'CTRLS'",
-      "Add Slider Control 'Wiggle Freq' to 'CTRLS'",
-      "Add Slider Control 'Wiggle Amp' to 'CTRLS'",
+      "Layer 'GLOBALS' must exist (a Null is ideal)",
+      "Add Slider Control 'Stop Motion FPS' to 'GLOBALS'",
+      "Add Slider Control 'Wiggle Freq' to 'GLOBALS'",
+      "Add Slider Control 'Wiggle Amp' to 'GLOBALS'",
     ]);
   });
 
@@ -47,7 +47,7 @@ describe('golden: posterized wiggle (spec §7.4)', () => {
   it('emits match names when enabled', () => {
     const p = goldenProject();
     p.settings.useMatchNames = true;
-    expect(compile(p, 'g1').code).toContain('CTRLS.effect("Wiggle Freq")("ADBE Slider Control-0001")');
+    expect(compile(p, 'g1').code).toContain('GLOBALS.effect("Wiggle Freq")("ADBE Slider Control-0001")');
   });
 
   it('omits comments when comments = none', () => {

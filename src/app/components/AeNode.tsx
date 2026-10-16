@@ -31,11 +31,19 @@ function AeNodeImpl({ id, data, selected }: NodeProps<RFNode<AeNodeData>>) {
   return (
     <div className={`ae-node cat-${def.category} status-${data.status} ${selected ? 'selected' : ''}`} title={def.description}>
       <div className="ae-node-head" style={inst.color ? { background: inst.color } : undefined}>
-        <span>{title}</span>
-        <span className="ae-node-meta">
-          {title !== def.label && <span className="ae-node-type">{def.label}</span>}
-          {inst.preview && <span className="ae-node-badge" title="Shown in the Output Preview">◉</span>}
-        </span>
+        <span className="ae-node-chip" title={def.description}>{def.label}</span>
+        <NodeName inst={inst} title={title} fallback={control?.effectName || def.label} />
+        {def.special !== 'output' && (
+          <button
+            className={`nodrag ae-node-preview ${inst.preview ? 'on' : ''}`}
+            aria-pressed={!!inst.preview}
+            aria-label={inst.preview ? 'Remove from the Output Preview' : 'Add to the Output Preview'}
+            title={inst.preview ? 'In the Output Preview (click to remove)' : 'Add to the Output Preview'}
+            onClick={(e) => { e.stopPropagation(); actions.setPreview(inst.id, !inst.preview); }}
+          >
+            {inst.preview ? '◉' : '○'}
+          </button>
+        )}
       </div>
 
       {def.special === 'ref.control' && (
@@ -93,6 +101,39 @@ function AeNodeImpl({ id, data, selected }: NodeProps<RFNode<AeNodeData>>) {
 }
 
 export const AeNode = memo(AeNodeImpl);
+
+/** The node's name: double-click (or F2 when selected) to rename. Clearing it restores the default. */
+function NodeName({ inst, title, fallback }: { inst: NodeInstance; title: string; fallback: string }) {
+  const renaming = useStore((s) => s.renamingId === inst.id);
+  const setRenaming = (on: boolean) => useStore.setState({ renamingId: on ? inst.id : null });
+  if (!renaming) {
+    return (
+      <span className="ae-node-name" title="Double-click to rename" onDoubleClick={(e) => { e.stopPropagation(); setRenaming(true); }}>
+        {title}
+      </span>
+    );
+  }
+  const commit = (v: string) => {
+    const name = v.trim();
+    actions.renameNode(inst.id, name === fallback ? '' : name);
+    setRenaming(false);
+  };
+  return (
+    <input
+      className="nodrag ae-node-name-input"
+      aria-label="Node name"
+      autoFocus
+      defaultValue={title}
+      onFocus={(e) => e.currentTarget.select()}
+      onKeyDown={(e) => {
+        e.stopPropagation();
+        if (e.key === 'Enter') commit(e.currentTarget.value);
+        if (e.key === 'Escape') setRenaming(false);
+      }}
+      onBlur={(e) => commit(e.currentTarget.value)}
+    />
+  );
+}
 
 export function InputWidget({ inst, port, type }: { inst: NodeInstance; port: PortDef; type: string }) {
   const value = inst.inputs[port.id] ?? port.default;

@@ -18,7 +18,10 @@ clean, readable AE expression that you paste into After Effects. Fully client-si
   already connected. Copy, cut, paste and duplicate nodes (`Ctrl/Cmd+C/X/V/D`), including between tabs and windows.
 - **Inspector:** variable name (showing the identifier actually emitted), node colour, every input and setting, and
   "Add to Previewer".
-- **Globals strip:** the pinned CTRLS layer plus layers, controls and comps. Rename once and every expression updates.
+- **Globals:** a pinned `GLOBALS` null, "this layer" and your own layers, each with its controls, plus comps. They're
+  edited in a dialog (the Globals button). Rename once and every expression updates.
+- **Nodes:** headers read `[Type] Name`. Double-click (or F2) to rename; the ○ circle adds or removes the node in the
+  Output Preview.
 - **Expressions:** each one has its own tab and target (with a 3D toggle). Edges that no longer fit after a target change
   stay in place, shown in red.
 - **Output panel:**

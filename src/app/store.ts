@@ -28,6 +28,8 @@ interface State {
   selectedNodeId: string | null;
   /** Every selected node (box-select / Shift-click). */
   selection: string[];
+  /** Node whose name is being edited on the canvas. */
+  renamingId: string | null;
   connectError: ConnectError | null;
 
   /** Apply an undoable change. */
@@ -53,6 +55,7 @@ export const useStore = create<State>((set, get) => ({
   lastAt: 0,
   selectedNodeId: null,
   selection: [],
+  renamingId: null,
   connectError: null,
 
   update(recipe, coalesceKey) {

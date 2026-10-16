@@ -1,14 +1,14 @@
 // ExpressionLab · Position (2D)
-const CTRLS = thisComp.layer("CTRLS");
+const GLOBALS = thisComp.layer("GLOBALS");
 
 // Stop Motion FPS
-const stopMotionFps = CTRLS.effect("Stop Motion FPS")("Slider");
+const stopMotionFps = GLOBALS.effect("Stop Motion FPS")("Slider");
 posterizeTime(stopMotionFps);
 
 // Wiggle Freq
-const wiggleFreq = CTRLS.effect("Wiggle Freq")("Slider");
+const wiggleFreq = GLOBALS.effect("Wiggle Freq")("Slider");
 // Wiggle Amp
-const wiggleAmp = CTRLS.effect("Wiggle Amp")("Slider");
+const wiggleAmp = GLOBALS.effect("Wiggle Amp")("Slider");
 // Wiggle
 const wiggle1 = wiggle(wiggleFreq, wiggleAmp, 1, 0.5);
 
